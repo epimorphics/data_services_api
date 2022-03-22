@@ -1,5 +1,9 @@
 # Changelog for DS API rubygem
 
+## 1.3.0 - 2022-03-22
+
+- (Ian) Publish gem to Github package registry
+
 ## 1.2.1 - 2022-01-28
 
 - (Ian) Fix minimum Ruby version constraint in gemspec.
