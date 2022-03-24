@@ -8,11 +8,11 @@ require 'data_services_api/version'
 Gem::Specification.new do |spec|
   spec.name          = 'data_services_api'
   spec.version       = DataServicesApi::VERSION
-  spec.authors       = ['Ian Dickinson']
-  spec.email         = ['ian.dickinson@epimorphics.com']
+  spec.authors       = ['Epimorphics Ltd']
+  spec.email         = ['info@epimorphics.com']
   spec.summary       = 'Ruby wrapper for Epimorphics data service API'
   spec.homepage      = 'https://github.com/epimorphics/data-API-ruby'
-  spec.license       = ''
+  spec.license       = 'MIT'
   spec.required_ruby_version = '>= 2.6'
 
   spec.files         = `git ls-files -z`.split("\x0")
@@ -20,20 +20,21 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'faraday_middleware' # , "~> 0.10.0"
-  spec.add_runtime_dependency 'json'
-  spec.add_runtime_dependency 'yajl-ruby'
-
-  spec.add_development_dependency 'bundler'
-  spec.add_development_dependency 'byebug'
-  spec.add_development_dependency 'excon'
-  spec.add_development_dependency 'json_expressions'
-  spec.add_development_dependency 'minitest'
-  spec.add_development_dependency 'minitest-rg'
-  spec.add_development_dependency 'minitest-vcr'
-  spec.add_development_dependency 'mocha'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rubocop'
-  spec.add_development_dependency 'webmock'
   spec.metadata['rubygems_mfa_required'] = 'true'
+
+  spec.add_runtime_dependency 'faraday_middleware', '~> 1.2.0'
+  spec.add_runtime_dependency 'json', '~> 2.6.1'
+  spec.add_runtime_dependency 'yajl-ruby', '~> 1.4.1'
+
+  spec.add_development_dependency 'bundler', '~> 2.3.5'
+  spec.add_development_dependency 'byebug', '~> 11.1.3'
+  spec.add_development_dependency 'excon', '~> 0.90.0'
+  spec.add_development_dependency 'json_expressions', '~> 0.9.0'
+  spec.add_development_dependency 'minitest', '~> 5.15.0'
+  spec.add_development_dependency 'minitest-rg', '~> 5.2.0'
+  spec.add_development_dependency 'minitest-vcr', '~> 1.4.0'
+  spec.add_development_dependency 'mocha', '~> 1.13.0'
+  spec.add_development_dependency 'rake', '~> 13.0.6'
+  spec.add_development_dependency 'rubocop', '~> 1.25.0'
+  spec.add_development_dependency 'webmock', '~> 3.14.0'
 end

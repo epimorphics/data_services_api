@@ -37,25 +37,38 @@ to be a cost-effective change, and no benefit to end-users (the internals of the
 query language are not exposed to end-users). This calculation may be different in
 future.
 
+---
 
-## Installation
+## Usage
 
-Add this line to your application's Gemfile:
+To add this gem as a dependency to another Ruby project, add this line to your
+application's Gemfile:
 
 ```ruby
-gem 'data-api'
+source 'https://rubygems.pkg.github.com/epimorphics' do
+  gem 'data_services_api'
+end
 ```
 
-And then execute:
-
-```sh
-bundle
-```
-
-Also, an API URL needs to be provided for the Service class in order for the gem
+An API URL needs to be provided for the `Service` class in order for the gem
 to work.
 
-## Tests
+---
+## Developer notes
+
+### Linting
+
+Rubocop should not report any warnings:
+
+```sh
+$ rubocop
+Inspecting 21 files
+.....................
+
+21 files inspected, no offenses detected
+```
+
+### Tests
 
 To run the tests you must set the environment variable `API_URL` to point to a
 running instance of a valid SAPINT API and run `rake test`:
@@ -65,3 +78,28 @@ API_URL=http://localhost:8080 rake test
 ```
 
 If `API_URL` is not set it will default to `http://localhost:8888`
+
+### Publishing the gem to the GitHub Package Registry
+
+This gem is now published to the Epimorphics section of the GitHub Package
+Registry (GPR). Previously we linked directly to the GitHub repo in the
+`Gemfile`s of applications consuming this library, but this practice is now
+anti-preferred.
+
+Note that in order to publish to the Epimorphics section of the GPR, you'll
+need a GitHub personal access token (PAT). There are [instructions on the Epimorphics
+wiki](https://github.com/epimorphics/internal/wiki/Ansible-CICD#creating-a-pat-for-gpr-access)
+for creating a new PAT if you don't have one. Once created, you can use the
+same PAT in multiple projects, you don't need to create a new one each time.
+
+At present, publishing is a manual step for Gem maintainers. The process is:
+
+1. Make the required code changes, and have them reviewed by other members of
+   the team
+2. Update `CHANGELOG.md` with the changes. Update
+   `lib/data_services_api/version.rb` following semantic version principles
+3. Check that the gem builds correctly: `make gem`
+4. Publish the new gem to GPR: `make publish`
+5. Check on the [GitHub Package
+   Registry](https://github.com/orgs/epimorphics/packages?repo_name=data_services_api)
+   to see that the new gem has been published.

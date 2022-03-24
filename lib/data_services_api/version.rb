@@ -2,6 +2,6 @@
 
 # :nodoc:
 module DataServicesApi
-  VERSION = '1.2.1'
+  VERSION = '1.3.0'
   MAJOR, MINOR, PATCH = VERSION.split('.')
 end
