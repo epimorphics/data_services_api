@@ -54,6 +54,7 @@ An API URL needs to be provided for the `Service` class in order for the gem
 to work.
 
 ---
+
 ## Developer notes
 
 ### Linting
@@ -103,3 +104,12 @@ At present, publishing is a manual step for Gem maintainers. The process is:
 5. Check on the [GitHub Package
    Registry](https://github.com/orgs/epimorphics/packages?repo_name=data_services_api)
    to see that the new gem has been published.
+
+### Prometheus monitoring
+
+This gem integrates with Prometheus monitoring by emitting the following
+`ActiveSupport::Notificaion`s:
+
+- `response.api` - API response, including status code and duration
+- `connection_failure.api` - failure to connect to the API, with exception detail
+- `service_exception.api` - failure to process the API response
