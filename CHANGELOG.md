@@ -1,5 +1,9 @@
 # Changelog for DS API rubygem
 
+## 1.3.1 - 2022-03-28
+
+- (Ian) Add duration to reported ActiveSupport::Notification of API response
+
 ## 1.3.0 - 2022-03-22
 
 - (Ian) Publish gem to Github package registry

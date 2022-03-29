@@ -43,6 +43,7 @@ module DataServicesApi
     end
 
     def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      start_time = Time.now
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.get do |req|
@@ -51,7 +52,7 @@ module DataServicesApi
         req.params = params.merge(options)
       end
 
-      instrument_response(response)
+      instrument_response(response, start_time)
 
       ok?(response, http_url) && response
     rescue ServiceException => e
@@ -136,16 +137,16 @@ module DataServicesApi
       end
     end
 
-    def instrument_response(response)
-      instrumenter&.instrument('response.data_api', response: response)
+    def instrument_response(response, start_time)
+      instrumenter&.instrument('response.api', response: response, duration: Time.now - start_time)
     end
 
     def instrument_connection_failure(exception)
-      instrumenter&.instrument('connection_failure.data_api', exception: exception)
+      instrumenter&.instrument('connection_failure.api', exception: exception)
     end
 
     def instrument_service_exception(exception)
-      instrumenter&.instrument('service_exception.data_api', exception: exception)
+      instrumenter&.instrument('service_exception.api', exception: exception)
     end
 
     # Return true if we're currently running in a Rails environment

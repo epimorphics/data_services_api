@@ -72,7 +72,7 @@ describe 'DataServicesAPI::Service', vcr: true do
 
     instrumentations = instrumenter.instrumentations
     _(instrumentations.size).must_equal 1
-    _(instrumentations.first.first).must_equal 'response.data_api'
+    _(instrumentations.first.first).must_equal 'response.api'
   end
 
   it 'should instrument a failed API call' do
@@ -86,7 +86,7 @@ describe 'DataServicesAPI::Service', vcr: true do
 
     instrumentations = instrumenter.instrumentations
     _(instrumentations.size).must_equal 1
-    _(instrumentations.first.first).must_equal 'connection_failure.data_api'
+    _(instrumentations.first.first).must_equal 'connection_failure.api'
   end
 
   it 'should instrument a failed API call' do
@@ -100,8 +100,8 @@ describe 'DataServicesAPI::Service', vcr: true do
 
     instrumentations = instrumenter.instrumentations
     _(instrumentations.size).must_equal 2
-    _(instrumentations[0].first).must_equal 'response.data_api'
-    _(instrumentations[1].first).must_equal 'service_exception.data_api'
+    _(instrumentations[0].first).must_equal 'response.api'
+    _(instrumentations[1].first).must_equal 'service_exception.api'
   end
 
   it 'should log the call to the data API' do
