@@ -1,5 +1,10 @@
 # Changelog for DS API rubygem
 
+## 1.3.2 - 2022-04-01
+
+- (Ian) Remove use of automated Faraday logging of API calls. Add manual
+  logging of API calls, to conform to local best practice
+
 ## 1.3.1 - 2022-03-28
 
 - (Ian) Add duration to reported ActiveSupport::Notification of API response
