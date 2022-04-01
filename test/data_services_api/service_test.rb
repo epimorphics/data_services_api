@@ -22,7 +22,7 @@ class MockLogger
   end
 
   def info(message, &block)
-    @messages[:info] << [message, block.call]
+    @messages[:info] << [message, block&.call]
   end
 end
 
@@ -57,7 +57,8 @@ describe 'DataServicesAPI::Service', vcr: true do
   end
 
   it 'should retrieve JSON with HTTP GET' do
-    service = DataServicesApi::Service.new(url: 'http://localhost:8080')
+    mock_logger = MockLogger.new
+    service = DataServicesApi::Service.new(url: 'http://localhost:8080', logger: mock_logger)
     json = service.api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
     _(json).wont_be_nil
     _(json['meta']).wont_be_nil
@@ -65,9 +66,10 @@ describe 'DataServicesAPI::Service', vcr: true do
 
   it 'should instrument an API call' do
     instrumenter = MockNotifications.new
+    mock_logger = MockLogger.new
 
     DataServicesApi::Service
-      .new(url: api_url, instrumenter: instrumenter)
+      .new(url: api_url, instrumenter: instrumenter, logger: mock_logger)
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
     instrumentations = instrumenter.instrumentations
@@ -77,10 +79,11 @@ describe 'DataServicesAPI::Service', vcr: true do
 
   it 'should instrument a failed API call' do
     instrumenter = MockNotifications.new
+    mock_logger = MockLogger.new
 
     _ do
       DataServicesApi::Service
-        .new(url: 'http://localhost:8765', instrumenter: instrumenter)
+        .new(url: 'http://localhost:8765', instrumenter: instrumenter, logger: mock_logger)
         .api_get_json('http://localhost:8765/landregistry/id/ukhpi', { '_limit' => 1 })
     end.must_raise
 
@@ -91,10 +94,11 @@ describe 'DataServicesAPI::Service', vcr: true do
 
   it 'should instrument a failed API call' do
     instrumenter = MockNotifications.new
+    mock_logger = MockLogger.new
 
     _ do
       DataServicesApi::Service
-        .new(url: api_url, instrumenter: instrumenter)
+        .new(url: api_url, instrumenter: instrumenter, logger: mock_logger)
         .api_get_json("#{api_url}/ceci/nest/pas/une/page", { '_limit' => 1 })
     end.must_raise
 

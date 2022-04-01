@@ -6,7 +6,11 @@ describe 'DataServiceApi::Dataset' do
   before do
     VCR.insert_cassette name, record: :new_episodes
     api_url = ENV['API_URL'] || 'http://localhost:8888'
-    @dataset = DataServicesApi::Service.new(url: api_url).dataset('ukhpi')
+
+    mock_logger = mock('logger')
+    mock_logger.expects(:info).at_least(0)
+
+    @dataset = DataServicesApi::Service.new(url: api_url, logger: mock_logger).dataset('ukhpi')
   end
 
   after do
