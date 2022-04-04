@@ -56,10 +56,10 @@ module DataServicesApi
 
       ok?(response, http_url) && response
     rescue ServiceException => e
-      instrument_service_exception(e)
+      instrument_service_exception(http_url, e, start_time)
       throw e
     rescue Faraday::ConnectionFailed => e
-      instrument_connection_failure(e)
+      instrument_connection_failure(http_url, e, start_time)
       throw e
     end
 
@@ -102,7 +102,6 @@ module DataServicesApi
       Faraday.new(url: http_url) do |faraday|
         faraday.request(:url_encoded)
         faraday.use(FaradayMiddleware::FollowRedirects)
-        faraday.response(:logger, logger) if logger
 
         # setting the adapter must be the final step, otherwise get a warning from Faraday
         faraday.adapter(:net_http)
@@ -138,20 +137,45 @@ module DataServicesApi
     end
 
     def instrument_response(response, start_time)
+      log_api_response(response, start_time: start_time)
+
       instrumenter&.instrument('response.api', response: response, duration: Time.now - start_time)
     end
 
-    def instrument_connection_failure(exception)
+    def instrument_connection_failure(http_url, exception, start_time)
+      log_api_response(
+        nil,
+        start_time: start_time,
+        message: exception.message,
+        status: 'connection fail',
+        url: http_url
+      )
       instrumenter&.instrument('connection_failure.api', exception: exception)
     end
 
-    def instrument_service_exception(exception)
+    def instrument_service_exception(http_url, exception, start_time)
+      log_api_response(
+        nil,
+        start_time: start_time,
+        message: exception.message,
+        status: 'service exception',
+        url: http_url
+      )
       instrumenter&.instrument('service_exception.api', exception: exception)
     end
 
     # Return true if we're currently running in a Rails environment
     def in_rails?
       defined?(Rails)
+    end
+
+    def log_api_response(response, start_time:, url: nil, status: nil, message: 'GET from API')
+      logger.info(
+        url: response ? response.env[:url].to_s : url,
+        status: status || response.status,
+        duration: Time.now - start_time,
+        message: message
+      )
     end
   end
 end

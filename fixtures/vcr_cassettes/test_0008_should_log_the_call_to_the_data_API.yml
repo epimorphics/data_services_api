@@ -36,4 +36,40 @@ http_interactions:
       encoding: UTF-8
       string: '{"meta":{"@id":"http://localhost//landregistry/id/ukhpi?_limit=1","publisher":"","license":"","licenseName":"","comment":"","version":"0.1","hasFormat":["http://localhost//landregistry/id/ukhpi.html?_limit=1","http://localhost//landregistry/id/ukhpi.geojson?_limit=1","http://localhost//landregistry/id/ukhpi.rdf?_limit=1","http://localhost//landregistry/id/ukhpi.json?_limit=1","http://localhost//landregistry/id/ukhpi.csv?_limit=1","http://localhost//landregistry/id/ukhpi.ttl?_limit=1"],"limit":1},"items":[{"@id":"http://landregistry.data.gov.uk/data/ukhpi/region/rutland/month/1999-05","refRegion":{"@id":"http://landregistry.data.gov.uk/id/region/rutland"},"refMonth":"1999-05","averagePrice":86936,"housePriceIndex":34.68,"percentageAnnualChange":7.75,"percentageChange":3.35,"salesVolume":77,"averagePriceDetached":118808,"housePriceIndexDetached":35.49,"percentageChangeDetached":3.21,"percentageAnnualChangeDetached":7.56,"averagePriceSemiDetached":71348,"housePriceIndexSemiDetached":34.29,"percentageChangeSemiDetached":3.42,"percentageAnnualChangeSemiDetached":7.91,"averagePriceTerraced":61817,"housePriceIndexTerraced":33.79,"percentageChangeTerraced":3.60,"percentageAnnualChangeTerraced":7.55,"averagePriceFlatMaisonette":42370,"housePriceIndexFlatMaisonette":34.70,"percentageChangeFlatMaisonette":3.61,"percentageAnnualChangeFlatMaisonette":9.47,"averagePriceNewBuild":99439,"housePriceIndexNewBuild":33.50,"percentageChangeNewBuild":3.17,"percentageAnnualChangeNewBuild":8.12,"salesVolumeNewBuild":21,"averagePriceExistingProperty":85036,"housePriceIndexExistingProperty":34.89,"percentageChangeExistingProperty":3.38,"percentageAnnualChangeExistingProperty":7.88,"salesVolumeExistingProperty":56,"refPeriodStart":"1999-05-01","refPeriodDuration":1}]}'
   recorded_at: Thu, 27 Jan 2022 18:49:22 GMT
-recorded_with: VCR 6.0.0
+- request:
+    method: get
+    uri: http://localhost:8888/landregistry/id/ukhpi?_limit=1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v1.10.0
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+  response:
+    status:
+      code: 200
+      message: ''
+    headers:
+      Sleuth-Trace-Id:
+      - 06ffa5932289460b
+      Sleuth-Span-Id:
+      - 06ffa5932289460b
+      Vary:
+      - Accept
+      Cache-Control:
+      - max-age=0
+      Content-Type:
+      - application/json
+      Content-Length:
+      - '1771'
+      Date:
+      - Fri, 01 Apr 2022 15:48:30 GMT
+    body:
+      encoding: UTF-8
+      string: '{"meta":{"@id":"http://localhost//landregistry/id/ukhpi?_limit=1","publisher":"","license":"","licenseName":"","comment":"","version":"0.1","hasFormat":["http://localhost//landregistry/id/ukhpi.html?_limit=1","http://localhost//landregistry/id/ukhpi.geojson?_limit=1","http://localhost//landregistry/id/ukhpi.rdf?_limit=1","http://localhost//landregistry/id/ukhpi.json?_limit=1","http://localhost//landregistry/id/ukhpi.csv?_limit=1","http://localhost//landregistry/id/ukhpi.ttl?_limit=1"],"limit":1},"items":[{"@id":"http://landregistry.data.gov.uk/data/ukhpi/region/rutland/month/1999-05","refRegion":{"@id":"http://landregistry.data.gov.uk/id/region/rutland"},"refMonth":"1999-05","averagePrice":86936,"housePriceIndex":34.68,"percentageAnnualChange":7.75,"percentageChange":3.35,"salesVolume":77,"averagePriceDetached":118808,"housePriceIndexDetached":35.49,"percentageChangeDetached":3.21,"percentageAnnualChangeDetached":7.56,"averagePriceSemiDetached":71348,"housePriceIndexSemiDetached":34.29,"percentageChangeSemiDetached":3.42,"percentageAnnualChangeSemiDetached":7.91,"averagePriceTerraced":61817,"housePriceIndexTerraced":33.79,"percentageChangeTerraced":3.60,"percentageAnnualChangeTerraced":7.55,"averagePriceFlatMaisonette":42370,"housePriceIndexFlatMaisonette":34.70,"percentageChangeFlatMaisonette":3.61,"percentageAnnualChangeFlatMaisonette":9.47,"averagePriceNewBuild":99439,"housePriceIndexNewBuild":33.50,"percentageChangeNewBuild":3.17,"percentageAnnualChangeNewBuild":8.12,"salesVolumeNewBuild":21,"averagePriceExistingProperty":85036,"housePriceIndexExistingProperty":34.89,"percentageChangeExistingProperty":3.38,"percentageAnnualChangeExistingProperty":7.88,"salesVolumeExistingProperty":56,"refPeriodStart":"1999-05-01","refPeriodDuration":1}]}'
+  recorded_at: Fri, 01 Apr 2022 15:48:30 GMT
+recorded_with: VCR 6.1.0

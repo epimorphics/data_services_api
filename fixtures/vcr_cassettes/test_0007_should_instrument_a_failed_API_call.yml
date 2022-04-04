@@ -92,4 +92,50 @@ http_interactions:
           "path" : "/ceci/nest/pas/une/page"
         }
   recorded_at: Fri, 28 Jan 2022 15:09:22 GMT
-recorded_with: VCR 6.0.0
+- request:
+    method: get
+    uri: http://localhost:8888/ceci/nest/pas/une/page?_limit=1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v1.10.0
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Sleuth-Trace-Id:
+      - a3a55a831158c2c3
+      Sleuth-Span-Id:
+      - a3a55a831158c2c3
+      Vary:
+      - Accept
+      - Access-Control-Request-Headers
+      - Access-Control-Request-Method
+      - Origin
+      Cache-Control:
+      - max-age=0
+      Content-Type:
+      - application/json;charset=UTF-8
+      Content-Length:
+      - '183'
+      Date:
+      - Fri, 01 Apr 2022 15:48:30 GMT
+    body:
+      encoding: UTF-8
+      string: |-
+        {
+          "timestamp" : "Fri Apr 01 15:48:30 GMT 2022",
+          "status" : "404",
+          "error" : "Not Found",
+          "message" : "Requested endpoint doesn't exist",
+          "path" : "/ceci/nest/pas/une/page"
+        }
+  recorded_at: Fri, 01 Apr 2022 15:48:30 GMT
+recorded_with: VCR 6.1.0
