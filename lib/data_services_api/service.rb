@@ -139,7 +139,8 @@ module DataServicesApi
     def instrument_response(response, start_time)
       log_api_response(response, start_time: start_time)
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      instrumenter&.instrument('response.api', response: response, duration: Time.now - start_time)
+      elapsed_time = (end_time - start_time).to_i
+      instrumenter&.instrument('response.api', response: response, duration: elapsed_time)
     end
 
     def instrument_connection_failure(http_url, exception, start_time)
@@ -171,11 +172,12 @@ module DataServicesApi
 
     def log_api_response(response, start_time, url: nil, status: nil, message: 'GET from API')
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      elapsed_time = (end_time - start_time).to_i
 
       logger.info(
         url: response ? response.env[:url].to_s : url,
         status: status || response.status,
-        duration: Time.now - start_time,
+        duration: elapsed_time,
         message: message
       )
     end
