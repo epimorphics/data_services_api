@@ -43,7 +43,7 @@ module DataServicesApi
     end
 
     def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      start_time = Time.now
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.get do |req|
@@ -138,7 +138,7 @@ module DataServicesApi
 
     def instrument_response(response, start_time)
       log_api_response(response, start_time: start_time)
-
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       instrumenter&.instrument('response.api', response: response, duration: Time.now - start_time)
     end
 
@@ -169,7 +169,9 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    def log_api_response(response, start_time:, url: nil, status: nil, message: 'GET from API')
+    def log_api_response(response, start_time, url: nil, status: nil, message: 'GET from API')
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+
       logger.info(
         url: response ? response.env[:url].to_s : url,
         status: status || response.status,
