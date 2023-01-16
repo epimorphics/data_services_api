@@ -5,7 +5,7 @@ require './test/minitest_helper'
 describe 'DataServiceApi::Dataset' do
   before do
     VCR.insert_cassette name, record: :new_episodes
-    api_url = ENV['API_URL'] || 'http://localhost:8888'
+    api_url = ENV.fetch('API_URL', 'http://localhost:8888')
 
     mock_logger = mock('logger')
     mock_logger.expects(:info).at_least(0)
