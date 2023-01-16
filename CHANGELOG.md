@@ -1,9 +1,22 @@
 # Changelog for DS API rubygem
 
+## 1.3.3- 2023-01-13
+
+- (Jon) Refactors the elapsed time calculated for API requests to be resolved as
+  microseconds rather than milliseconds. This is to improve the reporting of the
+  elapsed time in the system tooling logs.
+- (Jon) Resolves failing tests due to the improper invocation of mock objects
+  without the correct arguments.
+- (Jon) Minor text changes to the .gemspec file to update the description and
+  summary of the gem as well as the name and email address for the maintainer.
+- (Jon) Includes multiple updates and fixes to the codebase to resolve the
+  majority of the Rubocop warnings.
+- (Jon) Updated CI/CD workflows to use latest Epimorphics GitHub Actions versions.
+
 ## 1.3.2 - 2022-04-01
 
-- (Ian) Remove use of automated Faraday logging of API calls. Add manual
-  logging of API calls, to conform to local best practice
+- (Ian) Remove use of automated Faraday logging of API calls. Add manual logging
+  of API calls, to conform to local best practice
 
 ## 1.3.1 - 2022-03-28
 
@@ -19,8 +32,8 @@
 
 ## 1.2.0 - 2022-01-27
 
-- (Ian) Added `ActiveSupport` instrumentation calls to allow collecting
-  of metrics on API calls
+- (Ian) Added `ActiveSupport` instrumentation calls to allow collecting of
+  metrics on API calls
 
 ## 1.1.1 - 2022-01-21
 
@@ -32,8 +45,8 @@
 
 ## 1.0.0 - 2021-06-14 (Bogdan)
 
-- Added a DSAPI to SapiNT converter, which converts all DSAPI queries
-  to SapiNT queries and then sends them to a SapiNT backend
+- Added a DSAPI to SapiNT converter, which converts all DSAPI queries to SapiNT
+  queries and then sends them to a SapiNT backend
 
 ## 0.4.5 - 2019-11-11
 
