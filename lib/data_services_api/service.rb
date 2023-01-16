@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module DataServicesApi
+module DataServicesApi # rubocop:disable Style/Documentation
   # Denotes the encapsulated DataServicesAPI service
   class Service # rubocop:disable Metrics/ClassLength
     attr_reader :instrumenter, :logger, :parser, :url
@@ -137,32 +137,38 @@ module DataServicesApi
     end
 
     def instrument_response(response, start_time)
-      log_api_response(response, start_time: start_time)
+      log_api_response(response, start_time)
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      elapsed_time = (end_time - start_time).to_i
-      instrumenter&.instrument('response.api', response: response, duration: elapsed_time)
+      elapsed_time = end_time - start_time
+      instrumenter&.instrument(
+        'response.api',
+        response: response,
+        duration: elapsed_time
+      )
     end
 
     def instrument_connection_failure(http_url, exception, start_time)
+      exception_status = 'connection_failure.api'
       log_api_response(
         nil,
-        start_time: start_time,
+        start_time,
         message: exception.message,
-        status: 'connection fail',
+        status: exception_status,
         url: http_url
       )
-      instrumenter&.instrument('connection_failure.api', exception: exception)
+      instrumenter&.instrument(exception_status, exception)
     end
 
     def instrument_service_exception(http_url, exception, start_time)
+      exception_status = 'service_exception.api'
       log_api_response(
         nil,
-        start_time: start_time,
+        start_time,
         message: exception.message,
-        status: 'service exception',
+        status: exception_status,
         url: http_url
       )
-      instrumenter&.instrument('service_exception.api', exception: exception)
+      instrumenter&.instrument(exception_status, exception)
     end
 
     # Return true if we're currently running in a Rails environment
@@ -172,8 +178,7 @@ module DataServicesApi
 
     def log_api_response(response, start_time, url: nil, status: nil, message: 'GET from API')
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      elapsed_time = (end_time - start_time).to_i
-
+      elapsed_time = end_time - start_time
       logger.info(
         url: response ? response.env[:url].to_s : url,
         status: status || response.status,
