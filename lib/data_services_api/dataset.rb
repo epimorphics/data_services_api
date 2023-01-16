@@ -39,7 +39,7 @@ module DataServicesApi
     end
 
     def explain_api
-      # There should be a HATEOS-style reference to this endpoint
+      # TODO: There should be a HATEOS-style reference to this endpoint
       # https://github.com/epimorphics/ds-api-ruby/issues/1
       structure_api.gsub(/structure$/, 'explain')
     end
