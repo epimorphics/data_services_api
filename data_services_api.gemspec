@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'json', '~> 2.6.1'
   spec.add_runtime_dependency 'yajl-ruby', '~> 1.4.1'
 
-  spec.add_development_dependency 'bundler', '~> 2.3.5'
+  spec.add_development_dependency 'bundler', '~> 2.4'
   spec.add_development_dependency 'byebug', '~> 11.1.3'
   spec.add_development_dependency 'excon', '~> 0.90.0'
   spec.add_development_dependency 'json_expressions', '~> 0.9.0'
