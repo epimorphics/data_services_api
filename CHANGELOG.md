@@ -1,6 +1,6 @@
 # Changelog for DS API rubygem
 
-## 1.3.3- 2023-01-13
+## 1.3.3- 2023-01-17
 
 - (Jon) Refactors the elapsed time calculated for API requests to be resolved as
   microseconds rather than milliseconds. This is to improve the reporting of the
@@ -12,6 +12,7 @@
 - (Jon) Includes multiple updates and fixes to the codebase to resolve the
   majority of the Rubocop warnings.
 - (Jon) Updated CI/CD workflows to use latest Epimorphics GitHub Actions versions.
+- (Jon) Updated System test to include a test for the new elapsed time metric.
 
 ## 1.3.2 - 2022-04-01
 
