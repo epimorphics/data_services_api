@@ -118,4 +118,26 @@ describe 'DataServicesAPI::Service', vcr: true do
     # @TODO: add specific constraints on received log messages
     _(logger.messages).wont_be_empty
   end
+
+  it 'should correctly receive a duration in microseconds' do
+    new_logger = MockLogger.new
+
+    DataServicesApi::Service
+      .new(url: api_url, logger: new_logger)
+      .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
+
+    _(new_logger).wont_be_nil
+
+    msg_log = new_logger.messages[:info].first
+
+    _(msg_log).wont_be_nil
+    _(msg_log.size).must_equal 2
+
+    json = msg_log.first
+
+    _(json).wont_be_nil
+    _(json[:duration]).wont_be_nil
+    _(json[:duration]).must_be :>, 0
+    assert_kind_of(Integer, json[:duration])
+  end
 end
