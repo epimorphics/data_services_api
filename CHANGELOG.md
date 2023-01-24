@@ -1,6 +1,6 @@
 # Changelog for DS API rubygem
 
-## 1.3.3- 2023-01-17
+## 1.3.3- 2023-01
 
 - (Jon) Refactors the elapsed time calculated for API requests to be resolved as
   microseconds rather than milliseconds. This is to improve the reporting of the
@@ -11,8 +11,14 @@
   summary of the gem as well as the name and email address for the maintainer.
 - (Jon) Includes multiple updates and fixes to the codebase to resolve the
   majority of the Rubocop warnings.
-- (Jon) Updated CI/CD workflows to use latest Epimorphics GitHub Actions versions.
+- (Jon) Updated CI/CD workflows to use latest Epimorphics GitHub Actions
+  versions.
 - (Jon) Updated System test to include a test for the new elapsed time metric.
+- (Jon) Refactored the linting settings to include lessons learned in other
+  projects thereby improving the opinionated results from RuboCop to ensure the
+  codebase adheres to current best practices.
+- (Jon) Refactored the version cadence creation to include a SUFFIX value if
+  provided; otherwise no SUFFIX is included in the version number.
 
 ## 1.3.2 - 2022-04-01
 
