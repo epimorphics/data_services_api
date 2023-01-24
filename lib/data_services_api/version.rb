@@ -6,5 +6,5 @@ module DataServicesApi
   MINOR = 3
   PATCH = 3
   SUFFIX = nil
-  VERSION = "#{MAJOR}.#{MINOR}.#{PATCH}#{SUFFIX && '.' + SUFFIX.to_s}"
+  VERSION = "#{MAJOR}.#{MINOR}.#{PATCH}#{SUFFIX && ".#{SUFFIX}"}"
 end
