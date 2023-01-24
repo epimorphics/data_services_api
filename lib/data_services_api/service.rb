@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module DataServicesApi # rubocop:disable Style/Documentation
+module DataServicesApi
   # Denotes the encapsulated DataServicesAPI service
   class Service # rubocop:disable Metrics/ClassLength
     attr_reader :instrumenter, :logger, :parser, :url
