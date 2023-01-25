@@ -115,7 +115,11 @@ module DataServicesApi
 
     def ok?(response, http_url)
       unless (200..207).cover?(response.status)
-        msg = "Failed to read from #{http_url}: #{response.status.inspect}"
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        response_message = response_body[:message]
+        response_error = response_body[:error]
+        msg = "#{response_error}: #{response_message}}"
+
         raise ServiceException.new(msg, response.status, http_url, response.body)
       end
 
@@ -153,7 +157,7 @@ module DataServicesApi
         nil,
         start_time,
         message: exception.message,
-        status: exception_status,
+        status: `#{exception_status}: #{exception.status}`,
         url: http_url
       )
       instrumenter&.instrument(exception_status, exception)
@@ -165,7 +169,7 @@ module DataServicesApi
         nil,
         start_time,
         message: exception.message,
-        status: exception_status,
+        status: exception.status,
         url: http_url
       )
       instrumenter&.instrument(exception_status, exception)
