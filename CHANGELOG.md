@@ -19,6 +19,8 @@
   codebase adheres to current best practices.
 - (Jon) Refactored the version cadence creation to include a SUFFIX value if
   provided; otherwise no SUFFIX is included in the version number.
+- (Jon) Includes initial steps for better logging of API requests and responses
+  to the system logs.
 
 ## 1.3.2 - 2022-04-01
 
