@@ -21,6 +21,9 @@
   provided; otherwise no SUFFIX is included in the version number.
 - (Jon) Includes initial steps for better logging of API requests and responses
   to the system logs.
+- (Jon) As part of the better logging updates the error message returned to the
+  requesting app has been refactored to be more concise as well the failed
+  connection error status has been set specifically to `503 Service Unavailable`.
 
 ## 1.3.2 - 2022-04-01
 
