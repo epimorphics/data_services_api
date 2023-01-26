@@ -115,7 +115,6 @@ module DataServicesApi
 
     def ok?(response, http_url)
       unless (200..207).cover?(response.status)
-        # msg = "Failed to read from #{http_url}: #{response.status.inspect}"
         response_body = JSON.parse(response.body, symbolize_names: true)
         response_message = response_body[:message]
         response_error = response_body[:error]
