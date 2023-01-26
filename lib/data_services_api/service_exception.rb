@@ -10,9 +10,10 @@ module DataServicesApi
 
     def initialize(msg, status, source = nil, _service_msg = nil)
       super(msg)
+
       @status = status
       @source = source
-      @service_msg = _service_msg
+      @service_msg = service_message
     end
   end
 end

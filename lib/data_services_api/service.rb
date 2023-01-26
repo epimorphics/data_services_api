@@ -115,10 +115,11 @@ module DataServicesApi
 
     def ok?(response, http_url)
       unless (200..207).cover?(response.status)
+        # msg = "Failed to read from #{http_url}: #{response.status.inspect}"
         response_body = JSON.parse(response.body, symbolize_names: true)
         response_message = response_body[:message]
         response_error = response_body[:error]
-        msg = "#{response_error}: #{response_message}}"
+        msg = "#{response_error}: #{response_message}"
 
         raise ServiceException.new(msg, response.status, http_url, response.body)
       end
@@ -152,19 +153,17 @@ module DataServicesApi
     end
 
     def instrument_connection_failure(http_url, exception, start_time)
-      exception_status = 'connection_failure.api'
       log_api_response(
         nil,
         start_time,
         message: exception.message,
-        status: `#{exception_status}: #{exception.status}`,
+        status: 503, # Service Unavailable status code (see https://httpstatuses.com/503)
         url: http_url
       )
-      instrumenter&.instrument(exception_status, exception)
+      instrumenter&.instrument('connection_failure.api', exception)
     end
 
     def instrument_service_exception(http_url, exception, start_time)
-      exception_status = 'service_exception.api'
       log_api_response(
         nil,
         start_time,
@@ -172,7 +171,7 @@ module DataServicesApi
         status: exception.status,
         url: http_url
       )
-      instrumenter&.instrument(exception_status, exception)
+      instrumenter&.instrument('service_exception.api', exception)
     end
 
     # Return true if we're currently running in a Rails environment
