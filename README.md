@@ -16,16 +16,16 @@ returned to the caller in a compact JSON format.
 
 In 2021, we took the decision to retire the DsAPI codebase, which has not been
 actively maintained for some time. In its place, we now expect to use
-[SapiNT](https://github.com/epimorphics/sapi-nt). SapiNT performs a similar
+[Sapi-NT](https://github.com/epimorphics/sapi-nt). Sapi-NT performs a similar
 function, in that it provides a RESTful API in which compact queries are translated
 into SPARQL expressions, and the results are available in (amongst other formats)
-JSON encoding. However, the input to SapiNT, in which we articulate the projection
+JSON encoding. However, the input to Sapi-NT, in which we articulate the projection
 of the underlying hypercube that we require is encoded as URL parameters in an
 HTTP GET request. DsAPI, in contrast, expects the input query to be POSTed as a
 JSON expression.
 
 To minimise changes to the client applications in which this gem is used, we have
-implemented a shim layer that accepts DsAPI expressions and re-codes them as SapiNT
+implemented a shim layer that accepts DsAPI expressions and re-codes them as Sapi-NT
 URLs. Similarly, differences in the returned JSON results formats are also ironed
 out by this shim layer. It is possible to do this because, once the designs of the
 applications had settled, the HMLR apps only use a subset of the expressive power
@@ -50,8 +50,8 @@ source 'https://rubygems.pkg.github.com/epimorphics' do
 end
 ```
 
-An API URL needs to be provided for the `Service` class in order for the gem
-to work.
+_N.B. An API URL needs to be provided by that project for the `Service` class in
+order for the gem to work._
 
 ---
 
@@ -71,14 +71,25 @@ Inspecting 21 files
 
 ### Tests
 
-To run the tests you must set the environment variable `API_URL` to point to a
-running instance of a valid SAPINT API and run `rake test`:
+You will need to have started the [HMLR Data API](https://github.com/epimorphics/lr-data-api)
+locally. To do so follow the instructions in the repository's [README](https://github.com/epimorphics/lr-data-api#run)
+
+Once the API is started you can invoke the tests with the simple command below[^1]:
+
+```sh
+rake test
+```
+
+You can also set the environment variable `API_URL` to point to a running
+instance of the HMLR Data API from a non-default port:
 
 ```sh
 API_URL=http://localhost:8080 rake test
 ```
 
-If `API_URL` is not set it will default to `http://localhost:8888`
+_N.B If `API_URL` environment variable is not set it will default to `http://localhost:8888`_
+
+---
 
 ### Publishing the gem to the GitHub Package Registry
 
@@ -113,3 +124,6 @@ This gem integrates with Prometheus monitoring by emitting the following
 - `response.api` - API response, including status code and duration
 - `connection_failure.api` - failure to connect to the API, with exception detail
 - `service_exception.api` - failure to process the API response
+
+[^1]: You may need to preface the `rake test` command with `bundle exec` if you
+      are using a Ruby version manager such as `rbenv` or `rvm`.

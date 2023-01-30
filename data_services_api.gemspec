@@ -1,4 +1,4 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
 
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
@@ -10,7 +10,8 @@ Gem::Specification.new do |spec|
   spec.version       = DataServicesApi::VERSION
   spec.authors       = ['Epimorphics Ltd']
   spec.email         = ['info@epimorphics.com']
-  spec.summary       = 'Ruby wrapper for Epimorphics data service API'
+  spec.summary       = 'Data Services API'
+  spec.description   = 'Ruby wrapper for Epimorphics Data Services API'
   spec.homepage      = 'https://github.com/epimorphics/data-API-ruby'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 2.6'
@@ -26,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'json', '~> 2.6.1'
   spec.add_runtime_dependency 'yajl-ruby', '~> 1.4.1'
 
-  spec.add_development_dependency 'bundler', '~> 2.3.5'
+  spec.add_development_dependency 'bundler', '~> 2.4'
   spec.add_development_dependency 'byebug', '~> 11.1.3'
   spec.add_development_dependency 'excon', '~> 0.90.0'
   spec.add_development_dependency 'json_expressions', '~> 0.9.0'

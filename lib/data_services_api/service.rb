@@ -43,7 +43,7 @@ module DataServicesApi
     end
 
     def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      start_time = Time.now
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.get do |req|
@@ -115,7 +115,11 @@ module DataServicesApi
 
     def ok?(response, http_url)
       unless (200..207).cover?(response.status)
-        msg = "Failed to read from #{http_url}: #{response.status.inspect}"
+        response_body = JSON.parse(response.body, symbolize_names: true)
+        response_message = response_body[:message]
+        response_error = response_body[:error]
+        msg = "#{response_error}: #{response_message}"
+
         raise ServiceException.new(msg, response.status, http_url, response.body)
       end
 
@@ -137,31 +141,36 @@ module DataServicesApi
     end
 
     def instrument_response(response, start_time)
-      log_api_response(response, start_time: start_time)
-
-      instrumenter&.instrument('response.api', response: response, duration: Time.now - start_time)
+      log_api_response(response, start_time)
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      elapsed_time = end_time - start_time
+      instrumenter&.instrument(
+        'response.api',
+        response: response,
+        duration: elapsed_time
+      )
     end
 
     def instrument_connection_failure(http_url, exception, start_time)
       log_api_response(
         nil,
-        start_time: start_time,
+        start_time,
         message: exception.message,
-        status: 'connection fail',
+        status: 503, # Service Unavailable status code (see https://httpstatuses.com/503)
         url: http_url
       )
-      instrumenter&.instrument('connection_failure.api', exception: exception)
+      instrumenter&.instrument('connection_failure.api', exception)
     end
 
     def instrument_service_exception(http_url, exception, start_time)
       log_api_response(
         nil,
-        start_time: start_time,
+        start_time,
         message: exception.message,
-        status: 'service exception',
+        status: exception.status,
         url: http_url
       )
-      instrumenter&.instrument('service_exception.api', exception: exception)
+      instrumenter&.instrument('service_exception.api', exception)
     end
 
     # Return true if we're currently running in a Rails environment
@@ -169,11 +178,13 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    def log_api_response(response, start_time:, url: nil, status: nil, message: 'GET from API')
+    def log_api_response(response, start_time, url: nil, status: nil, message: 'GET from API')
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      elapsed_time = end_time - start_time
       logger.info(
         url: response ? response.env[:url].to_s : url,
         status: status || response.status,
-        duration: Time.now - start_time,
+        duration: elapsed_time,
         message: message
       )
     end
