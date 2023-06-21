@@ -17,4 +17,4 @@ jobs:
     - name: Run tests
       run: rake test
       env:
-        API_URL: http://localhost:8080
+        API_URL: http://localhost:8888
