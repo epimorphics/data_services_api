@@ -1,5 +1,12 @@
 # Changelog for DS API rubygem
 
+## 1.4.0 - 2023-06-21
+
+- (Jon) New and improved logging on the service level
+- (Jon) Inclusion of the `X-Request-Id` header to SAPINT requests
+- (Jon) Updated service logger comments with better intentions
+- (Jon) Improved Unit tests for the service logger
+
 ## 1.3.3- 2023-01
 
 - (Jon) Refactors the elapsed time calculated for API requests to be resolved as
