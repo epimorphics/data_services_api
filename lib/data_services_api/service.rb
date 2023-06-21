@@ -204,7 +204,7 @@ module DataServicesApi
       # immediately log the receipt time of the response
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # parse out the optional parameters and set defaults
-      status ||= response && response.status
+      status ||= response&.status
       request_url ||= response && response.env.url.to_s
       # calculate the elapsed time
       elapsed_time = end_time - start_time
