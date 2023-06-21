@@ -2,15 +2,46 @@
 
 require './test/minitest_helper'
 
-describe 'DataServiceApi::Dataset' do
-  before do
-    VCR.insert_cassette name, record: :new_episodes
-    api_url = ENV.fetch('API_URL', 'http://localhost:8888')
+class MockNotifications
+  attr_reader :instrumentations
 
-    mock_logger = mock('logger')
+  def initialize
+    @instrumentations = []
+  end
+
+  def instrument(*args)
+    @instrumentations << args
+  end
+end
+
+class MockLogger
+  attr_reader :messages
+
+  def initialize
+    @messages = Hash.new { |h, k| h[k] = [] }
+  end
+
+  def info(message, &block)
+    @messages[:info] << [message, block&.call]
+  end
+end
+
+describe 'DataServiceApi::Dataset' do
+  let(:api_url) do
+    ENV.fetch('API_URL', 'http://localhost:8888')
+  end
+
+  let :mock_logger do
+    MockLogger.new
+  end
+
+  before do
+    instrumenter = MockNotifications.new
+    VCR.insert_cassette(name, record: :new_episodes)
+
     mock_logger.expects(:info).at_least(0)
 
-    @dataset = DataServicesApi::Service.new(url: api_url, logger: mock_logger).dataset('ukhpi')
+    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: instrumenter, logger: mock_logger).dataset('ukhpi')
   end
 
   after do
