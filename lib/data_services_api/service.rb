@@ -47,6 +47,7 @@ module DataServicesApi
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.get do |req|
+        req.headers['X-Request-ID'] = Thread.current[:request_id] if Thread.current[:request_id]
         req.headers['Accept'] = accept_headers
         req.options.params_encoder = Faraday::FlatParamsEncoder
         req.params = params.merge(options)
@@ -90,6 +91,7 @@ module DataServicesApi
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.post do |req|
+        req.headers['X-Request-ID'] = Thread.current[:request_id] if Thread.current[:request_id]
         req.headers['Accept'] = 'application/json'
         req.headers['Content-Type'] = 'application/json'
         req.body = json
@@ -131,13 +133,14 @@ module DataServicesApi
     end
 
     def report_json_failure(json)
+      msg = "JSON result was not parsed correctly: #{json.slice(0, 1000)}"
+
       if in_rails?
-        msg = 'JSON result was not parsed correctly (no temp file saved)'
-        Rails.logger.info(msg)
-        throw msg
-      else
-        throw "JSON result was not parsed correctly: #{json.slice(0, 1000)}"
+        # msg = 'JSON result was not parsed correctly (no temp file saved)'
+        logger.error(msg)
       end
+
+      throw msg
     end
 
     def instrument_response(response, start_time)
