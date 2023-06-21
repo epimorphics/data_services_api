@@ -1,0 +1,49 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: http://localhost:8888/ceci/nest/pas/une/page?_limit=1
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v1.10.2
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+  response:
+    status:
+      code: 404
+      message: ''
+    headers:
+      Sleuth-Trace-Id:
+      - 41a13f1d6ad2f6c2
+      Sleuth-Span-Id:
+      - 41a13f1d6ad2f6c2
+      Vary:
+      - Accept
+      - Access-Control-Request-Headers
+      - Access-Control-Request-Method
+      - Origin
+      Cache-Control:
+      - max-age=0
+      Content-Type:
+      - application/json;charset=UTF-8
+      Content-Length:
+      - '183'
+      Date:
+      - Wed, 21 Jun 2023 12:46:30 GMT
+    body:
+      encoding: UTF-8
+      string: |-
+        {
+          "timestamp" : "Wed Jun 21 12:46:30 GMT 2023",
+          "status" : "404",
+          "error" : "Not Found",
+          "message" : "Requested endpoint doesn't exist",
+          "path" : "/ceci/nest/pas/une/page"
+        }
+  recorded_at: Wed, 21 Jun 2023 12:46:30 GMT
+recorded_with: VCR 6.1.0
