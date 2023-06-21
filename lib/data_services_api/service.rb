@@ -185,7 +185,7 @@ module DataServicesApi
     end
 
     # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
-    # Log the API response
+    # Log the API response with the appropriate log level
     # @param [Faraday::Response] response - The response object
     # @param [Float] start_time - The time the request was sent
     # @param [String] log_type - The type of log to use (info, warn, error, debug)
