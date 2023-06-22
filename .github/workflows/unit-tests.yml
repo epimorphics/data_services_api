@@ -7,13 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 2.7
+
     - name: Install dependencies (bundle)
       run: bundle install
+
     - name: Run tests
       run: rake test
       env:
-        API_URL: http://localhost:8080
+        API_URL: http://localhost:8888

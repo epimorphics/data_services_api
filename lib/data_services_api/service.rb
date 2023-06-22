@@ -47,6 +47,7 @@ module DataServicesApi
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.get do |req|
+        req.headers['X-Request-ID'] = Thread.current[:request_id] if Thread.current[:request_id]
         req.headers['Accept'] = accept_headers
         req.options.params_encoder = Faraday::FlatParamsEncoder
         req.params = params.merge(options)
@@ -90,6 +91,7 @@ module DataServicesApi
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.post do |req|
+        req.headers['X-Request-ID'] = Thread.current[:request_id] if Thread.current[:request_id]
         req.headers['Accept'] = 'application/json'
         req.headers['Content-Type'] = 'application/json'
         req.body = json
@@ -131,13 +133,14 @@ module DataServicesApi
     end
 
     def report_json_failure(json)
+      msg = "JSON result was not parsed correctly: #{json.slice(0, 1000)}"
+
       if in_rails?
-        msg = 'JSON result was not parsed correctly (no temp file saved)'
-        Rails.logger.info(msg)
-        throw msg
-      else
-        throw "JSON result was not parsed correctly: #{json.slice(0, 1000)}"
+        # msg = 'JSON result was not parsed correctly (no temp file saved)'
+        logger.error(msg)
       end
+
+      throw msg
     end
 
     def instrument_response(response, start_time)
@@ -152,12 +155,14 @@ module DataServicesApi
     end
 
     def instrument_connection_failure(http_url, exception, start_time)
+      # Service Unavailable status code (see https://httpstatuses.com/503)
       log_api_response(
         nil,
         start_time,
         message: exception.message,
-        status: 503, # Service Unavailable status code (see https://httpstatuses.com/503)
-        url: http_url
+        status: 503,
+        request_url: http_url,
+        log_type: 'error'
       )
       instrumenter&.instrument('connection_failure.api', exception)
     end
@@ -168,7 +173,8 @@ module DataServicesApi
         start_time,
         message: exception.message,
         status: exception.status,
-        url: http_url
+        request_url: http_url,
+        log_type: 'error'
       )
       instrumenter&.instrument('service_exception.api', exception)
     end
@@ -178,15 +184,84 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    def log_api_response(response, start_time, url: nil, status: nil, message: 'GET from API')
+    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
+    # Log the API response with the appropriate log level
+    # @param [Faraday::Response] response - The response object
+    # @param [Float] start_time - The time the request was sent
+    # @param [String] log_type - The type of log to use (info, warn, error, debug)
+    # @param [String] message - The message to log
+    # @param [Integer] status - The status code of the response
+    # @param [String] request_url - The URL of the request
+    # @return [void]
+    def log_api_response(
+      response,
+      start_time,
+      message = 'completed',
+      status = nil,
+      request_url = nil,
+      log_type = 'info'
+    )
+      # immediately log the receipt time of the response
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      # parse out the optional parameters and set defaults
+      status ||= response&.status
+      request_url ||= response && response.env.url.to_s
+      # calculate the elapsed time
       elapsed_time = end_time - start_time
-      logger.info(
-        url: response ? response.env[:url].to_s : url,
-        status: status || response.status,
-        duration: elapsed_time,
-        message: message
-      )
+      # add the request url and elapsed time to the message if it's the default message
+      if message == 'Completed'
+        message = "#{message} #{request_url}, time taken #{format('%.0f μs',
+                                                                  elapsed_time)}"
+      end
+
+      case log_type
+      when 'error'
+        log_error(
+          request_url: request_url,
+          status: status,
+          duration: elapsed_time,
+          message: message
+        )
+      when 'warn'
+        log_warn(
+          request_url: request_url,
+          status: status,
+          duration: elapsed_time,
+          message: message
+        )
+      when 'debug'
+        log_debug(
+          request_url: request_url,
+          status: status,
+          duration: elapsed_time,
+          message: message
+        )
+      else
+        log_info(
+          request_url: request_url,
+          status: status,
+          duration: elapsed_time,
+          message: message
+        )
+      end
+    end
+    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
+
+    # These helper methods log the API responses at the appropriate level requested
+    def log_info(info)
+      logger.info(info)
+    end
+
+    def log_warn(warn)
+      logger.warn(warn)
+    end
+
+    def log_error(error)
+      logger.error(error)
+    end
+
+    def log_debug(debug)
+      logger.debug(debug)
     end
   end
 end
