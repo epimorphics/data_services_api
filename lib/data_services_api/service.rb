@@ -184,7 +184,7 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
+    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
     # Log the API response with the appropriate log level
     # @param [Faraday::Response] response - The response object
     # @param [Float] start_time - The time the request was sent
@@ -211,7 +211,7 @@ module DataServicesApi
       # add the request url and elapsed time to the message if it's the default message
       if message.casecmp?('Completed')
         message = "#{message.capitalize} #{request_url}, time taken #{format('%.0f μs',
-                                                                  elapsed_time)}"
+                                                                             elapsed_time)}"
       end
 
       log_fields = {
@@ -221,7 +221,7 @@ module DataServicesApi
         message: message
       }
 
-    # Log the API responses at the appropriate level requested
+      # Log the API responses at the appropriate level requested
       case log_type
       when 'error'
         logger.error(JSON.generate(log_fields))
@@ -233,6 +233,6 @@ module DataServicesApi
         logger.info(JSON.generate(log_fields))
       end
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
+    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
   end
 end
