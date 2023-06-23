@@ -209,8 +209,8 @@ module DataServicesApi
       # calculate the elapsed time
       elapsed_time = end_time - start_time
       # add the request url and elapsed time to the message if it's the default message
-      if message == 'Completed'
-        message = "#{message} #{request_url}, time taken #{format('%.0f μs',
+      if message.casecmp?('Completed')
+        message = "#{message.capitalize} #{request_url}, time taken #{format('%.0f μs',
                                                                   elapsed_time)}"
       end
 
