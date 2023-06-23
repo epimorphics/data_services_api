@@ -141,9 +141,11 @@ describe 'DataServicesAPI::Service', vcr: true do
 
     json = msg_log.first
 
-    _(json).wont_be_nil
-    _(json[:duration]).wont_be_nil
-    _(json[:duration]).must_be :>, 0
-    assert_kind_of(Integer, json[:duration])
+    duration = JSON.parse(json)['duration']
+
+    _(duration).wont_be_nil
+    _(duration).wont_be_nil
+    _(duration).must_be :>, 0
+    assert_kind_of(Integer, duration)
   end
 end

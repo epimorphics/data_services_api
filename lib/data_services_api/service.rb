@@ -184,7 +184,7 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
+    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
     # Log the API response with the appropriate log level
     # @param [Faraday::Response] response - The response object
     # @param [Float] start_time - The time the request was sent
@@ -196,7 +196,7 @@ module DataServicesApi
     def log_api_response(
       response,
       start_time,
-      message = 'completed',
+      message = 'Completed',
       status = nil,
       request_url = nil,
       log_type = 'info'
@@ -209,59 +209,30 @@ module DataServicesApi
       # calculate the elapsed time
       elapsed_time = end_time - start_time
       # add the request url and elapsed time to the message if it's the default message
-      if message == 'Completed'
-        message = "#{message} #{request_url}, time taken #{format('%.0f μs',
-                                                                  elapsed_time)}"
+      if message  == 'Completed'
+        message = "#{message} Data Services API request,
+                  time taken #{format('%.0f μs', elapsed_time)}"
       end
 
+      log_fields = {
+        request_url: request_url,
+        status: status,
+        duration: elapsed_time,
+        message: message
+      }
+
+      # Log the API responses at the appropriate level requested
       case log_type
       when 'error'
-        log_error(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.error(JSON.generate(log_fields))
       when 'warn'
-        log_warn(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.warn(JSON.generate(log_fields))
       when 'debug'
-        log_debug(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.debug(JSON.generate(log_fields))
       else
-        log_info(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.info(JSON.generate(log_fields))
       end
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
-
-    # These helper methods log the API responses at the appropriate level requested
-    def log_info(info)
-      logger.info(info)
-    end
-
-    def log_warn(warn)
-      logger.warn(warn)
-    end
-
-    def log_error(error)
-      logger.error(error)
-    end
-
-    def log_debug(debug)
-      logger.debug(debug)
-    end
+    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
   end
 end
