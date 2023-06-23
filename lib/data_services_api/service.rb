@@ -196,7 +196,7 @@ module DataServicesApi
     def log_api_response(
       response,
       start_time,
-      message = 'completed',
+      message = 'Completed',
       status = nil,
       request_url = nil,
       log_type = 'info'
@@ -209,9 +209,9 @@ module DataServicesApi
       # calculate the elapsed time
       elapsed_time = end_time - start_time
       # add the request url and elapsed time to the message if it's the default message
-      if message.casecmp?('Completed')
-        message = "#{message.capitalize} #{request_url}, time taken #{format('%.0f μs',
-                                                                             elapsed_time)}"
+      if message  == 'Completed'
+        message = "#{message} Data Services API request,
+                  time taken #{format('%.0f μs', elapsed_time)}"
       end
 
       log_fields = {
