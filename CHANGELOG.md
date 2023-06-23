@@ -4,6 +4,7 @@
 
 - (Jon) Now handles matching the message flag while ignoring the casing of the message
 - (Jon) Better handling of reporting different logging levels using DRY principles
+- (Jon) Resolves failing test for duration as integer
 
 ## 1.4.0 - 2023-06-21
 
