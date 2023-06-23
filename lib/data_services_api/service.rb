@@ -214,54 +214,25 @@ module DataServicesApi
                                                                   elapsed_time)}"
       end
 
+      log_fields = {
+        request_url: request_url,
+        status: status,
+        duration: elapsed_time,
+        message: message
+      }
+
+    # Log the API responses at the appropriate level requested
       case log_type
       when 'error'
-        log_error(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.error(JSON.generate(log_fields))
       when 'warn'
-        log_warn(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.warn(JSON.generate(log_fields))
       when 'debug'
-        log_debug(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.debug(JSON.generate(log_fields))
       else
-        log_info(
-          request_url: request_url,
-          status: status,
-          duration: elapsed_time,
-          message: message
-        )
+        logger.info(JSON.generate(log_fields))
       end
     end
     # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists
-
-    # These helper methods log the API responses at the appropriate level requested
-    def log_info(info)
-      logger.info(info)
-    end
-
-    def log_warn(warn)
-      logger.warn(warn)
-    end
-
-    def log_error(error)
-      logger.error(error)
-    end
-
-    def log_debug(debug)
-      logger.debug(debug)
-    end
   end
 end
