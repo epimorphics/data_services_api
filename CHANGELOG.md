@@ -1,5 +1,10 @@
 # Changelog for DS API rubygem
 
+## 1.4.1 - 2023-06-23
+
+- (Jon) Better handling of reporting different logging levels using DRY principles
+- (Jon) Now handles matching the message flag while ignoring the casing of the message
+
 ## 1.4.0 - 2023-06-21
 
 - (Jon) New and improved logging on the service level
