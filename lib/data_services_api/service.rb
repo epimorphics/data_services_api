@@ -210,8 +210,8 @@ module DataServicesApi
       elapsed_time = end_time - start_time
       # add the request url and elapsed time to the message if it's the default message
       if message  == 'Completed'
-        message = "#{message} Data Services API request,
-                  time taken #{format('%.0f μs', elapsed_time)}"
+        message = "#{message} Data Services API request, time taken #{format('%.0f μs',
+                                                                             elapsed_time)}"
       end
 
       log_fields = {
