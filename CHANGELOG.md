@@ -1,5 +1,9 @@
 # Changelog for DS API rubygem
 
+## 1.5.0 - 2023-06-23
+
+- (Dan) Updates ruby to 2.7.8 and version cadence to 1.5.0
+
 ## 1.4.1 - 2023-06-23
 
 - (Jon) Now handles matching the message flag while ignoring the casing of the message
