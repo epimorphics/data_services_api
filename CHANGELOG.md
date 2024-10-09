@@ -2,7 +2,6 @@
 
 ## 1.5.0 - 2023-06-23
 
-- (Dan) Fixes failing tests
 - (Dan) Updates ruby to 2.7.8 and version cadence to 1.5.0
 
 ## 1.4.1 - 2023-06-23
