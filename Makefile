@@ -30,7 +30,7 @@ gem: ${GEM}
 
 test: gem
 	@bundle install
-	@rake test
+	@bundle exec rake test
 
 publish: ${GEM}
 	@echo Publishing package ${NAME}:${VERSION} to ${OWNER} ...
