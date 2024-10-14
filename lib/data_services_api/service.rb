@@ -47,7 +47,7 @@ module DataServicesApi
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.get do |req|
-        req.headers['X-Request-ID'] = Thread.current[:request_id] if Thread.current[:request_id]
+        req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
         req.headers['Accept'] = accept_headers
         req.options.params_encoder = Faraday::FlatParamsEncoder
         req.params = params.merge(options)
@@ -91,7 +91,7 @@ module DataServicesApi
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.post do |req|
-        req.headers['X-Request-ID'] = Thread.current[:request_id] if Thread.current[:request_id]
+        req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
         req.headers['Accept'] = 'application/json'
         req.headers['Content-Type'] = 'application/json'
         req.body = json
