@@ -1,13 +1,25 @@
 # Changelog for DS API rubygem
 
-## 1.5.0 - 2023-06-23
+## 1.5.1 - 2024-10-14
+
+- (Jon) Fixed casing on the `X-Request-Id` header for SAPINT requests to match
+  the header received from the apps using the gem.
+  [GH-189](https://github.com/epimorphics/hmlr-ansible-deployment/issues/189)
+- (Jon) Updated the previously supplied release date in the `v1.5.0` entry to
+  match the actual release date.
+- (Jon) Updated the `version.rb` `SUFFIX` entry to be `nil` by default to ensure
+  the version number is correctly formatted.
+
+## 1.5.0 - 2024-10-09
 
 - (Dan) Updates ruby to 2.7.8 and version cadence to 1.5.0
 
 ## 1.4.1 - 2023-06-23
 
-- (Jon) Now handles matching the message flag while ignoring the casing of the message
-- (Jon) Better handling of reporting different logging levels using DRY principles
+- (Jon) Now handles matching the message flag while ignoring the casing of the
+  message
+- (Jon) Better handling of reporting different logging levels using DRY
+  principles
 - (Jon) Resolves failing test for duration as integer
 
 ## 1.4.0 - 2023-06-21
@@ -40,7 +52,8 @@
   to the system logs.
 - (Jon) As part of the better logging updates the error message returned to the
   requesting app has been refactored to be more concise as well the failed
-  connection error status has been set specifically to `503 Service Unavailable`.
+  connection error status has been set specifically to `503 Service
+  Unavailable`.
 
 ## 1.3.2 - 2022-04-01
 
