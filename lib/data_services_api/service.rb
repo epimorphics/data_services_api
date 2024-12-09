@@ -37,7 +37,7 @@ module DataServicesApi
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options)
+    def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
       log_message(
         nil,
@@ -46,7 +46,7 @@ module DataServicesApi
         status: 200,
         request_url: "#{http_url}?#{query_string}",
         log_type: 'info',
-        response_status:"received"
+        response_status: 'received'
       )
 
       response = get_from_api(http_url, 'application/json', params, options)
@@ -100,7 +100,7 @@ module DataServicesApi
       parse_json(response.body)
     end
 
-    def post_to_api(http_url, json)
+    def post_to_api(http_url, json) # rubocop:disable Metrics/AbcSize
       # immediately log the time the request was sent in microseconds
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = set_connection_timeout(create_http_connection(http_url))
@@ -206,7 +206,7 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
+    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
     # Log the message with the appropriate log level
     # @param [Faraday::Response] response - The response object
     # @param [Float] start_time - The time the request was sent
@@ -233,9 +233,9 @@ module DataServicesApi
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (end_time - start_time) / 1000
       # add elapsed time to the message if the api request is completed
-      if request_status  == 'completed'
+      if request_status == 'completed'
         message = "#{request_status.capitalize} Data Services API request, time taken #{format('%.0f ms',
-                                                                             elapsed_time)}"
+                                                                                               elapsed_time)}"
       else
         message ||= "#{request_status.capitalize} Data Services API request"
       end
@@ -246,7 +246,7 @@ module DataServicesApi
         message: message,
         request_status: request_status,
         request_url: request_url,
-        status: status,
+        status: status
       }
 
       # Log the API responses at the appropriate level requested
@@ -262,6 +262,6 @@ module DataServicesApi
       end
       logger.flush if logger.respond_to?(:flush)
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
+    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
   end
 end

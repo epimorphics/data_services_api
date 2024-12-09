@@ -2,6 +2,10 @@
 
 ## 1.5.2 - 2024-10-15
 
+- (Jon) Updated the `CHANGELOG.md` to include the new version changes
+- (Jon) Updated the `lib/data_services_api/version.rb` to include the new version
+  number `1.5.2`.
+- (Jon) Updated the `lib/data_services_api/service.rb` for ignorable Rubocop warnings.
 - (Jon) Implemented the `.github/workflows/publish.yml` workflow to publish the
   gem to the Epimorphics GitHub Package Registry.
 - (Jon) Updated the `README.md` to include the new workflow and the `Makefile` to
