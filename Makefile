@@ -2,7 +2,7 @@
 
 NAME?=data_services_api
 OWNER?=epimorphics
-VERSION?=$(shell ruby -e 'require "./lib/data_services_api/version" ; puts DataServicesApi::VERSION')
+VERSION?=$(shell ruby -e 'require "./lib/${NAME}/version" ; puts DataServicesApi::VERSION')
 PAT?=$(shell read -p 'Github access token:' TOKEN; echo $$TOKEN)
 
 AUTH=${HOME}/.gem/credentials
@@ -18,7 +18,7 @@ ${AUTH}:
 	@echo ':github: Bearer ${PAT}' >> ${AUTH}
 	@chmod 0600 ${AUTH}
 
-${GEM}: ${SPEC} ./lib/data_services_api/version.rb
+${GEM}: ${SPEC} ./lib/${NAME}/version.rb
 	gem build ${SPEC}
 
 auth: ${AUTH}
@@ -42,3 +42,8 @@ clean:
 
 realclean: clean
 	@rm -rf ${AUTH}
+
+tags:
+	@echo name=${NAME}
+	@echo owner=${OWNER}
+	@echo version=${VERSION}
