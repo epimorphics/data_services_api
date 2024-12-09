@@ -1,5 +1,14 @@
 # Changelog for DS API rubygem
 
+## 1.5.2 - 2024-10-15
+
+- (Jon) Implemented the `.github/workflows/publish.yml` workflow to publish the
+  gem to the Epimorphics GitHub Package Registry.
+- (Jon) Updated the `README.md` to include the new workflow and the `Makefile` to
+  include the `publish` target to trigger the new workflow.
+- (Jon) Unified improved logging for requests and responses to the SAPINT
+  service, alongside improved comments and documentation.
+
 ## 1.5.1 - 2024-10-14
 
 - (Jon) Fixed casing on the `X-Request-Id` header for SAPINT requests to match
