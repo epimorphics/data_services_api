@@ -38,11 +38,23 @@ module DataServicesApi
 
     # Get parsed JSON from the given URL
     def get_json(http_url, params, options)
+      query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
+      log_message(
+        nil,
+        0,
+        message: "Data Services API request received: #{http_url}",
+        status: 200,
+        request_url: "#{http_url}?#{query_string}",
+        log_type: 'info',
+        response_status:"received"
+      )
+
       response = get_from_api(http_url, 'application/json', params, options)
       parse_json(response.body)
     end
 
     def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      # immediately log the time the request was sent in microseconds
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = set_connection_timeout(create_http_connection(http_url))
 
@@ -53,7 +65,8 @@ module DataServicesApi
         req.params = params.merge(options)
       end
 
-      instrument_response(response, start_time)
+      # immediately log the response was received
+      instrument_response(response, start_time, status: 'received')
 
       ok?(response, http_url) && response
     rescue ServiceException => e
@@ -88,6 +101,8 @@ module DataServicesApi
     end
 
     def post_to_api(http_url, json)
+      # immediately log the time the request was sent in microseconds
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = set_connection_timeout(create_http_connection(http_url))
 
       response = conn.post do |req|
@@ -96,6 +111,9 @@ module DataServicesApi
         req.headers['Content-Type'] = 'application/json'
         req.body = json
       end
+
+      # immediately log the response was received
+      instrument_response(response, start_time, status: 'received')
 
       ok?(response, http_url) && response
     end
@@ -143,10 +161,12 @@ module DataServicesApi
       throw msg
     end
 
-    def instrument_response(response, start_time)
-      log_api_response(response, start_time)
+    def instrument_response(response, start_time, status: 'completed')
+      log_message(response, start_time, request_status: status)
+      # immediately log the time the response was received in microseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      elapsed_time = end_time - start_time
+      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
+      elapsed_time = (end_time - start_time) / 1000
       instrumenter&.instrument(
         'response.api',
         response: response,
@@ -156,25 +176,27 @@ module DataServicesApi
 
     def instrument_connection_failure(http_url, exception, start_time)
       # Service Unavailable status code (see https://httpstatuses.com/503)
-      log_api_response(
+      log_message(
         nil,
         start_time,
         message: exception.message,
         status: 503,
         request_url: http_url,
-        log_type: 'error'
+        log_type: 'error',
+        request_status: 'error'
       )
       instrumenter&.instrument('connection_failure.api', exception)
     end
 
     def instrument_service_exception(http_url, exception, start_time)
-      log_api_response(
+      log_message(
         nil,
         start_time,
         message: exception.message,
         status: exception.status,
         request_url: http_url,
-        log_type: 'error'
+        log_type: 'error',
+        request_status: 'error'
       )
       instrumenter&.instrument('service_exception.api', exception)
     end
@@ -185,40 +207,46 @@ module DataServicesApi
     end
 
     # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
-    # Log the API response with the appropriate log level
+    # Log the message with the appropriate log level
     # @param [Faraday::Response] response - The response object
     # @param [Float] start_time - The time the request was sent
     # @param [String] log_type - The type of log to use (info, warn, error, debug)
     # @param [String] message - The message to log
     # @param [Integer] status - The status code of the response
     # @param [String] request_url - The URL of the request
+    # @param [String] request_status - The status of the request (received, processing, completed, error)
     # @return [void]
-    def log_api_response(
+    def log_message(
       response,
       start_time,
-      message = 'Completed',
+      message = nil,
       status = nil,
       request_url = nil,
-      log_type = 'info'
+      log_type = 'info',
+      request_status = 'completed'
     )
-      # immediately log the receipt time of the response
+      # immediately log the receipt time of the response in miroseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # parse out the optional parameters and set defaults
       status ||= response&.status
       request_url ||= response && response.env.url.to_s
-      # calculate the elapsed time
-      elapsed_time = end_time - start_time
-      # add the request url and elapsed time to the message if it's the default message
-      if message  == 'Completed'
-        message = "#{message} Data Services API request, time taken #{format('%.0f μs',
+      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
+      elapsed_time = (end_time - start_time) / 1000
+      # add elapsed time to the message if the api request is completed
+      if request_status  == 'completed'
+        message = "#{request_status.capitalize} Data Services API request, time taken #{format('%.0f ms',
                                                                              elapsed_time)}"
+      else
+        message ||= "#{request_status.capitalize} Data Services API request"
       end
 
+      # create a hash of the log fields including the request URL, status, duration, message, and request status
       log_fields = {
+        duration: elapsed_time,
+        message: message,
+        request_status: request_status,
         request_url: request_url,
         status: status,
-        duration: elapsed_time,
-        message: message
       }
 
       # Log the API responses at the appropriate level requested
@@ -232,6 +260,7 @@ module DataServicesApi
       else
         logger.info(JSON.generate(log_fields))
       end
+      logger.flush if logger.respond_to?(:flush)
     end
     # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize
   end
