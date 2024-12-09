@@ -32,7 +32,7 @@ test: gem
 	@bundle install
 	@bundle exec rake test
 
-publish: ${GEM}
+publish: ${AUTH} ${GEM}
 	@echo Publishing package ${NAME}:${VERSION} to ${OWNER} ...
 	@gem push --key github --host ${GPR} ${GEM}
 	@echo Done.
