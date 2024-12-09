@@ -46,7 +46,7 @@ module DataServicesApi
         status: 200,
         request_url: "#{http_url}?#{query_string}",
         log_type: 'info',
-        response_status:"received"
+        response_status: 'received'
       )
 
       response = get_from_api(http_url, 'application/json', params, options)
@@ -233,9 +233,9 @@ module DataServicesApi
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (end_time - start_time) / 1000
       # add elapsed time to the message if the api request is completed
-      if request_status  == 'completed'
+      if request_status == 'completed'
         message = "#{request_status.capitalize} Data Services API request, time taken #{format('%.0f ms',
-                                                                             elapsed_time)}"
+                                                                                               elapsed_time)}"
       else
         message ||= "#{request_status.capitalize} Data Services API request"
       end
@@ -246,7 +246,7 @@ module DataServicesApi
         message: message,
         request_status: request_status,
         request_url: request_url,
-        status: status,
+        status: status
       }
 
       # Log the API responses at the appropriate level requested
