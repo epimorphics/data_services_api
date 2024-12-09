@@ -206,7 +206,7 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
+    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
     # Log the message with the appropriate log level
     # @param [Faraday::Response] response - The response object
     # @param [Float] start_time - The time the request was sent
@@ -262,6 +262,6 @@ module DataServicesApi
       end
       logger.flush if logger.respond_to?(:flush)
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
+    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
   end
 end
