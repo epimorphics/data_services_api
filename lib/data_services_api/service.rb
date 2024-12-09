@@ -37,7 +37,7 @@ module DataServicesApi
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options)
+    def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
       log_message(
         nil,
@@ -100,7 +100,7 @@ module DataServicesApi
       parse_json(response.body)
     end
 
-    def post_to_api(http_url, json)
+    def post_to_api(http_url, json) # rubocop:disable Metrics/AbcSize
       # immediately log the time the request was sent in microseconds
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = set_connection_timeout(create_http_connection(http_url))
