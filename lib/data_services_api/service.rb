@@ -146,8 +146,6 @@ module DataServicesApi
         # instrument the request to log the time it takes to complete
         faraday.request :instrumentation, name: 'requests.api'
 
-        # faraday.response :logger, FaradayCustomLogger, { headers: true, bodies: true, errors: true }
-
         # set the basic auth if required
         faraday.basic_auth(api_user, api_pw) if auth
 
@@ -189,7 +187,7 @@ module DataServicesApi
       throw msg
     end
 
-    def instrument_response(response, start_time, request_status) # rubocop:disable Metrics/MethodLength
+    def instrument_response(response, start_time, _request_status)
       # immediately log the time the response was received in microseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
@@ -242,7 +240,7 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
+    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize, Layout/LineLength
     # Log the provided properties with the appropriate log level
     # @param [Hash] log_fields - The fields to log
     # @param [String] log_fields.message - The message to log
@@ -258,19 +256,13 @@ module DataServicesApi
 
       # immediately log the receipt time of the response in miroseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      # parse out the optional parameters and set defaults
-      log_fields[:message] ||= log_fields[:response]&.body
-      # log_fields[:request_url] ||= log_fields[:response]&.env.url.to_s
-      log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
-      log_fields[:start_time] ||= 0
-      log_fields[:status] ||= 200
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       duration = (end_time - log_fields[:start_time]) / 1000
-      elapsed_time = format('%.0f ms', duration)
-      # add elapsed time to the message if the api request is completed
-      # if log_fields[:request_status].present?
-      #   log_fields[:message] ||= "#{log_fields[:request_status]} Data Services API request in #{elapsed_time}"
-      # end
+      # parse out the optional parameters and set defaults
+      log_fields[:message] ||= log_fields[:response]&.body
+      log_fields[:request_time] ||= duration
+      log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
+      log_fields[:status] ||= 200
 
       # Log the API responses at the appropriate level requested
       case log_type
@@ -285,6 +277,6 @@ module DataServicesApi
       end
       logger.flush if logger.respond_to?(:flush)
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
+    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize, Layout/LineLength
   end
 end
