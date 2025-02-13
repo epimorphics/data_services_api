@@ -37,19 +37,38 @@ module DataServicesApi
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength
+    def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
-      log_message(
-        nil,
-        0,
-        message: "Data Services API request received: #{http_url}",
-        status: 200,
-        request_url: "#{http_url}?#{query_string}",
-        log_type: 'info',
-        response_status: 'received'
-      )
+
+      initiator = URI.parse(http_url)
+      path = initiator.path
+      source = path.split('/').last
 
       response = get_from_api(http_url, 'application/json', params, options)
+      # immediately log the time the response was received in microseconds
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
+      elapsed_time = (end_time - start_time) / 1000
+
+      # Construct the message based on the properties received
+      msg = 'processing Data Service API query'
+      # TODO: Agree on the format of the log message and the fields to be included in the message
+      # msg += " for #{path}" if path.present?
+      # msg += "?#{query_string}" if query_string.present?
+      msg += " from the #{source.upcase} service" if source.present?
+      msg += " for #{format('%.0f ms', elapsed_time)}" if elapsed_time.positive?
+
+      logged_fields = {
+        message: msg.upcase_first,
+        path: path,
+        query_string: query_string,
+        request_status: 'processing',
+        request_time: elapsed_time
+      }
+
+      log_message(logged_fields, 'info')
       parse_json(response.body)
     end
 
@@ -66,7 +85,7 @@ module DataServicesApi
       end
 
       # immediately log the response was received
-      instrument_response(response, start_time, status: 'received')
+      instrument_response(response, start_time, 'received')
 
       ok?(response, http_url) && response
     rescue ServiceException => e
@@ -113,15 +132,24 @@ module DataServicesApi
       end
 
       # immediately log the response was received
-      instrument_response(response, start_time, status: 'received')
+      instrument_response(response, start_time, 'received')
 
       ok?(response, http_url) && response
     end
 
-    def create_http_connection(http_url)
+    def create_http_connection(http_url, auth = false)
       Faraday.new(url: http_url) do |faraday|
-        faraday.request(:url_encoded)
-        faraday.use(FaradayMiddleware::FollowRedirects)
+        faraday.use Faraday::Request::UrlEncoded
+        faraday.use Faraday::Request::Retry
+        faraday.use FaradayMiddleware::FollowRedirects
+
+        # instrument the request to log the time it takes to complete
+        faraday.request :instrumentation, name: 'requests.api'
+
+        # faraday.response :logger, FaradayCustomLogger, { headers: true, bodies: true, errors: true }
+
+        # set the basic auth if required
+        faraday.basic_auth(api_user, api_pw) if auth
 
         # setting the adapter must be the final step, otherwise get a warning from Faraday
         faraday.adapter(:net_http)
@@ -161,8 +189,7 @@ module DataServicesApi
       throw msg
     end
 
-    def instrument_response(response, start_time, status: 'completed')
-      log_message(response, start_time, request_status: status)
+    def instrument_response(response, start_time, request_status) # rubocop:disable Metrics/MethodLength
       # immediately log the time the response was received in microseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
@@ -174,30 +201,39 @@ module DataServicesApi
       )
     end
 
-    def instrument_connection_failure(http_url, exception, start_time)
+    def instrument_connection_failure(http_url, exception, start_time) # rubocop:disable Metrics/MethodLength
+      # immediately log the time the response was received in microseconds
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
+      elapsed_time = (end_time - start_time) / 1000
       # Service Unavailable status code (see https://httpstatuses.com/503)
-      log_message(
-        nil,
-        start_time,
-        message: exception.message,
-        status: 503,
-        request_url: http_url,
-        log_type: 'error',
-        request_status: 'error'
-      )
+      log_message({
+                    message: exception.message,
+                    path: URI.parse(http_url).path,
+                    query_string: URI.parse(http_url).query,
+                    request_status: 'error',
+                    request_time: elapsed_time,
+                    status: 503
+                  }, 'error')
+
       instrumenter&.instrument('connection_failure.api', exception)
     end
 
-    def instrument_service_exception(http_url, exception, start_time)
-      log_message(
-        nil,
-        start_time,
-        message: exception.message,
-        status: exception.status,
-        request_url: http_url,
-        log_type: 'error',
-        request_status: 'error'
-      )
+    def instrument_service_exception(http_url, exception, start_time) # rubocop:disable Metrics/MethodLength
+      # immediately log the time the response was received in microseconds
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
+      elapsed_time = (end_time - start_time) / 1000
+      # log the exception message and status code
+      log_message({
+                    message: exception.message,
+                    path: URI.parse(http_url).path,
+                    query_string: URI.parse(http_url).query,
+                    request_status: 'error',
+                    request_time: elapsed_time,
+                    status: exception.status || RACK::Exception::HTTP_STATUS_CODES[exception]
+                  }, 'error')
+
       instrumenter&.instrument('service_exception.api', exception)
     end
 
@@ -207,47 +243,34 @@ module DataServicesApi
     end
 
     # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/ParameterLists, Metrics/AbcSize, Layout/LineLength
-    # Log the message with the appropriate log level
-    # @param [Faraday::Response] response - The response object
-    # @param [Float] start_time - The time the request was sent
+    # Log the provided properties with the appropriate log level
+    # @param [Hash] log_fields - The fields to log
+    # @param [String] log_fields.message - The message to log
+    # @param [Faraday::Response] log_fields.response - The response object
+    # @param [String] log_fields.request_url - The URL of the request
+    # @param [String] log_fields.request_status - The status of the request (received, processing, completed, error)
+    # @param [Float] log_fields.start_time - The time the request was sent
+    # @param [Integer] log_fields.status - The status code of the response
     # @param [String] log_type - The type of log to use (info, warn, error, debug)
-    # @param [String] message - The message to log
-    # @param [Integer] status - The status code of the response
-    # @param [String] request_url - The URL of the request
-    # @param [String] request_status - The status of the request (received, processing, completed, error)
     # @return [void]
-    def log_message(
-      response,
-      start_time,
-      message = nil,
-      status = nil,
-      request_url = nil,
-      log_type = 'info',
-      request_status = 'completed'
-    )
+    def log_message(log_fields, log_type = 'info')
+      puts "\n" if Rails.env.development? && Rails.logger.debug? && log_fields.present?
+
       # immediately log the receipt time of the response in miroseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # parse out the optional parameters and set defaults
-      status ||= response&.status
-      request_url ||= response && response.env.url.to_s
+      log_fields[:message] ||= log_fields[:response]&.body
+      # log_fields[:request_url] ||= log_fields[:response]&.env.url.to_s
+      log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
+      log_fields[:start_time] ||= 0
+      log_fields[:status] ||= 200
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      elapsed_time = (end_time - start_time) / 1000
+      duration = (end_time - log_fields[:start_time]) / 1000
+      elapsed_time = format('%.0f ms', duration)
       # add elapsed time to the message if the api request is completed
-      if request_status == 'completed'
-        message = "#{request_status.capitalize} Data Services API request, time taken #{format('%.0f ms',
-                                                                                               elapsed_time)}"
-      else
-        message ||= "#{request_status.capitalize} Data Services API request"
-      end
-
-      # create a hash of the log fields including the request URL, status, duration, message, and request status
-      log_fields = {
-        duration: elapsed_time,
-        message: message,
-        request_status: request_status,
-        request_url: request_url,
-        status: status
-      }
+      # if log_fields[:request_status].present?
+      #   log_fields[:message] ||= "#{log_fields[:request_status]} Data Services API request in #{elapsed_time}"
+      # end
 
       # Log the API responses at the appropriate level requested
       case log_type
