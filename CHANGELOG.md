@@ -1,7 +1,15 @@
 # Changelog for DS API rubygem
 
-## 1.5.2 - 2024-10-15
+## 1.5.2 - 2025-02
 
+- (Jon) Added timing for API requests to log processing time.
+- (Jon) Enhanced log messages with more detailed info about requests.
+- (Jon) Updated methods to streamline error handling and logging.
+- (Jon) Refactored connection creation to include retry logic.
+- (Jon) Cleaned up method parameters for better readability.
+- (Jon) Updated the `lib/data_services_api/service.rb` to include the `X-Request-Id`
+  header in the SAPINT requests to match the header received from the apps using
+  the gem.
 - (Jon) Updated the `CHANGELOG.md` to include the new version changes
 - (Jon) Updated the `lib/data_services_api/version.rb` to include the new version
   number `1.5.2`.
