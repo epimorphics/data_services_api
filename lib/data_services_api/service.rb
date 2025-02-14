@@ -205,14 +205,19 @@ module DataServicesApi
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (end_time - start_time) / 1000
       # Service Unavailable status code (see https://httpstatuses.com/503)
-      log_message({
-                    message: exception.message,
-                    path: URI.parse(http_url).path,
-                    query_string: URI.parse(http_url).query,
-                    request_status: 'error',
-                    request_time: elapsed_time,
-                    status: 503
-                  }, 'error')
+      # log the exception message and status code but only if we're in a Rails environment
+      in_rails? && log_message(
+        {
+          message: exception.message,
+          path: URI.parse(http_url).path,
+          query_string: URI.parse(http_url).query,
+          start_time: start_time || 0,
+          request_status: 'error',
+          request_time: elapsed_time,
+          status: 503
+        },
+        'error'
+      )
 
       instrumenter&.instrument('connection_failure.api', exception)
     end
@@ -222,15 +227,20 @@ module DataServicesApi
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (end_time - start_time) / 1000
-      # log the exception message and status code
-      log_message({
-                    message: exception.message,
-                    path: URI.parse(http_url).path,
-                    query_string: URI.parse(http_url).query,
-                    request_status: 'error',
-                    request_time: elapsed_time,
-                    status: exception.status || RACK::Exception::HTTP_STATUS_CODES[exception]
-                  }, 'error')
+
+      # log the exception message and status code but only if we're in a Rails environment
+      in_rails? && log_message(
+        {
+          message: exception.message,
+          path: URI.parse(http_url).path,
+          query_string: URI.parse(http_url).query,
+          start_time: start_time || 0,
+          request_status: 'error',
+          request_time: elapsed_time,
+          status: exception.status || RACK::Exception::HTTP_STATUS_CODES[exception]
+        },
+        'error'
+      )
 
       instrumenter&.instrument('service_exception.api', exception)
     end
