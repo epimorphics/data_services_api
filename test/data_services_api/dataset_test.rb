@@ -56,7 +56,12 @@ describe 'DataServiceApi::Dataset' do
   it 'should accept a query and return the result' do
     query = Class.new do
       def terms
-        { '@and' => [{ 'ukhpi:refMonth' => { '@ge' => { :@value => '2019-01', :@type => 'http://www.w3.org/2001/XMLSchema#gYearMonth' } } }, { 'ukhpi:refRegion' => { '@eq' => { :@id => 'http://landregistry.data.gov.uk/id/region/united-kingdom' } } }], '@sort' => [{ '@down' => 'ukhpi:refMonth' }], '@limit' => 1 }
+        { '@and' => [
+          { 'ukhpi:refMonth' => { '@ge' => { :@value => '2019-01', :@type => 'http://www.w3.org/2001/XMLSchema#gYearMonth' } } },
+          { 'ukhpi:refRegion' => { '@eq' => { :@id => 'http://landregistry.data.gov.uk/id/region/united-kingdom' } } }
+        ], '@sort' => [
+          { '@down' => 'ukhpi:refMonth' }
+        ], '@limit' => 1 }
       end
 
       def to_json(*_args)
