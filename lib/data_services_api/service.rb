@@ -143,8 +143,8 @@ module DataServicesApi
         faraday.use Faraday::Request::Retry
         faraday.use FaradayMiddleware::FollowRedirects
 
-        # instrument the request to log the time it takes to complete
-        faraday.request :instrumentation, name: 'requests.api'
+        # instrument the request to log the time it takes to complete but only if we're in a Rails environment
+        faraday.request :instrumentation, name: 'requests.api' if in_rails?
 
         # set the basic auth if required
         faraday.basic_auth(api_user, api_pw) if auth
