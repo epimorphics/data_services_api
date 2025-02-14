@@ -250,7 +250,7 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize, Layout/LineLength
+    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
     # Log the provided properties with the appropriate log level
     # @param [Hash] log_fields - The fields to log
     # @param [String] log_fields.message - The message to log
@@ -288,6 +288,6 @@ module DataServicesApi
       end
       logger.flush if logger.respond_to?(:flush)
     end
-    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize, Layout/LineLength
+    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
   end
 end
