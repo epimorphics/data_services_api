@@ -7,7 +7,7 @@ AllCops:
 
 Layout/LineLength:
   Max: 100
-  AllowedPatterns: ['^(\s*#)']
+  IgnoredPatterns: ['^(\s*#)']
   Exclude:
     - test/**/*
 
