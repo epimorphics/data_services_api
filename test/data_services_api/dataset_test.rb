@@ -28,7 +28,7 @@ end
 
 describe 'DataServiceApi::Dataset' do
   let(:api_url) do
-    ENV.fetch('API_URL', 'http://localhost:8888')
+    ENV.fetch('API_SERVICE_URL', 'http://localhost:8888')
   end
 
   let :mock_logger do
