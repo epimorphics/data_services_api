@@ -2,6 +2,11 @@
 
 ## 1.5.2 - 2025-02
 
+- (Jon) Added pre-commit and pre-push hooks to prevent committing and pushing
+  code that does not pass the linting and testing checks.
+- (Jon) Adjusted the styling and linting rules to ensure the codebase adheres to
+  the latest best practices.
+- (Jon) Refactored test suite and fixed tests for the service class.
 - (Jon) Added timing for API requests to log processing time.
 - (Jon) Enhanced log messages with more detailed info about requests.
 - (Jon) Updated methods to streamline error handling and logging.
