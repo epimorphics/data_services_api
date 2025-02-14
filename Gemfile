@@ -5,8 +5,7 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in data-api.gemspec
 gemspec
 
-gem 'simplecov', require: false
-
+# Add development dependencies here though as they are not required to run the gem
 group :development, :test do
   gem 'bundler', '~> 2.4'
   gem 'byebug', '~> 11.1.3'
@@ -18,5 +17,6 @@ group :development, :test do
   gem 'mocha', '~> 1.13.0'
   gem 'rake', '~> 13.0.6'
   gem 'rubocop', '~> 1.25.0'
+  gem 'simplecov', '~> 0.21.2', require: false
   gem 'webmock', '~> 3.14.0'
 end
