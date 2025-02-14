@@ -39,29 +39,29 @@ module DataServicesApi
     # Get parsed JSON from the given URL
     def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-
+      # make the request to the API and get the response immediately
+      response = get_from_api(http_url, 'application/json', params, options)
+      # next log the time the response was received in microseconds
+      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      # Now parse the query string from the parameters
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
 
       initiator = URI.parse(http_url)
       path = initiator.path
       source = path.split('/').last
-
-      response = get_from_api(http_url, 'application/json', params, options)
-      # immediately log the time the response was received in microseconds
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (end_time - start_time) / 1000
 
       # Construct the message based on the properties received
-      msg = 'processing Data Service API query'
+      msg = 'Processing Data Service API query'
       # TODO: Agree on the format of the log message and the fields to be included in the message
       # msg += " for #{path}" if path.present?
       # msg += "?#{query_string}" if query_string.present?
-      msg += " from the #{source.upcase} service" if source.present?
+      msg += " from the #{source.upcase} service" if in_rails? && source.present?
       msg += " for #{format('%.0f ms', elapsed_time)}" if elapsed_time.positive?
 
       logged_fields = {
-        message: msg.upcase_first,
+        message: msg,
         path: path,
         query_string: query_string,
         request_status: 'processing',
