@@ -16,7 +16,7 @@ fi
 # Check for existence of "new or modified" test files
 TEST_FILES="$(git diff --diff-filter=ACDM --name-only --cached | grep -E '(./test/*)$')"
 # Get all test files to run tests
-RUBY_FILES="$(grep -E '(_test\.rb)$')"
+RUBY_FILES="$(git ls-files | grep -i -E '(_test\.rb)$')"
 
 WORK_DONE=0
 
