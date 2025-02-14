@@ -173,7 +173,7 @@ module DataServicesApi
     end
 
     def as_http_api(api)
-      api.start_with?('http:') ? api : "#{url}#{api}"
+      api.start_with?('http') ? api : "#{url}#{api}"
     end
 
     def report_json_failure(json)
