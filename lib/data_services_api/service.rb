@@ -252,12 +252,13 @@ module DataServicesApi
     # @param [String] log_type - The type of log to use (info, warn, error, debug)
     # @return [void]
     def log_message(log_fields, log_type = 'info')
-      puts "\n" if Rails.env.development? && Rails.logger.debug? && log_fields.present?
+      puts "\n" if in_rails? && Rails.env.development? && Rails.logger.debug? && log_fields.present?
 
+      start_time = log_fields[:start_time].delete if log_fields[:start_time]
       # immediately log the receipt time of the response in miroseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      duration = (end_time - log_fields[:start_time]) / 1000
+      duration = (end_time - start_time) / 1000 if start_time
       # parse out the optional parameters and set defaults
       log_fields[:message] ||= log_fields[:response]&.body
       log_fields[:request_time] ||= duration
