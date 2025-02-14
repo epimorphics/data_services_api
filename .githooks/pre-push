@@ -14,8 +14,8 @@ if echo "$BRANCH_NAME" | grep -q '^(rebase)|(production)*$'; then
 fi
 
 # Check for existence of "new or modified" test files
-TEST_FILES="$(git diff --diff-filter=ACDM --name-only --cached | grep -E '(./test/*)$')"
-RUBY_FILES="$(git diff --diff-filter=ACDM --name-only --cached | grep -E '(_test\.rb)$')"
+TEST_FILES="$(git diff --diff-filter=d --name-only --cached | grep -E '(./test/*)$')"
+RUBY_FILES="$(git diff --diff-filter=d --name-only --cached | grep -E '(_test\.rb)$')"
 
 WORK_DONE=0
 
