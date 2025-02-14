@@ -5,9 +5,9 @@ AllCops:
     - db/**
   NewCops: enable
 
-
 Layout/LineLength:
   Max: 100
+  AllowedPatterns: ['^(\s*#)']
   Exclude:
     - test/**/*
 
