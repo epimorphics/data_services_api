@@ -293,7 +293,7 @@ module DataServicesApi
     def generate_service_message(msg, source, elapsed_time, _path = nil, _query_string = nil)
       # msg += " for #{path}" if path.present?
       # msg += "?#{query_string}" if query_string.present?
-      msg.concat(" from the #{source.upcase} service") if source.present?
+      msg.concat(" from the #{source.upcase} service") if in_rails? && source.present?
       msg.concat(" for #{format('%.0f ms', elapsed_time)}") if elapsed_time.positive?
     end
   end
