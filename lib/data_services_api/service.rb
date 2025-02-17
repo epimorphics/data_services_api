@@ -58,7 +58,7 @@ module DataServicesApi
         request_time: elapsed_time
       }
 
-      in_rails? && log_message(logged_fields, 'info')
+      log_message(logged_fields, 'info')
       parse_json(response.body)
     end
 
@@ -252,7 +252,7 @@ module DataServicesApi
     # @param [String] log_type - The type of log to use (info, warn, error, debug)
     # @return [void]
     def log_message(log_fields, log_type = 'info')
-      puts "\n" if Rails.env.development? && Rails.logger.debug? && log_fields.present?
+      puts "\n" if in_rails? && Rails.env.development? && Rails.logger.debug? && log_fields.present?
 
       start_time = log_fields[:start_time].delete if log_fields[:start_time]
       # immediately log the receipt time of the response in miroseconds
