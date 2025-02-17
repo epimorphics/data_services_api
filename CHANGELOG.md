@@ -1,7 +1,24 @@
 # Changelog for DS API rubygem
 
-## 1.5.2 - 2024-10-15
+## 1.5.2 - 2025-02
 
+- (Jon) Added pre-commit and pre-push hooks to prevent committing and pushing
+  code that does not pass the linting and testing checks.
+- (Jon) Adjusted the styling and linting rules to ensure the codebase adheres to
+  the latest best practices.
+- (Jon) Refactored test suite and fixed tests for the service class.
+- (Jon) Added timing for API requests to log processing time.
+- (Jon) Enhanced log messages with more detailed info about requests.
+- (Jon) Updated methods to streamline error handling and logging.
+- (Jon) Refactored connection creation to include retry logic.
+- (Jon) Cleaned up method parameters for better readability.
+- (Jon) Updated the `lib/data_services_api/service.rb` to include the `X-Request-Id`
+  header in the SAPINT requests to match the header received from the apps using
+  the gem.
+- (Jon) Updated the `CHANGELOG.md` to include the new version changes
+- (Jon) Updated the `lib/data_services_api/version.rb` to include the new version
+  number `1.5.2`.
+- (Jon) Updated the `lib/data_services_api/service.rb` for ignorable Rubocop warnings.
 - (Jon) Implemented the `.github/workflows/publish.yml` workflow to publish the
   gem to the Epimorphics GitHub Package Registry.
 - (Jon) Updated the `README.md` to include the new workflow and the `Makefile` to

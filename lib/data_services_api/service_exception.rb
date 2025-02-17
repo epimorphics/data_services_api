@@ -8,7 +8,7 @@ module DataServicesApi
   class ServiceException < RuntimeError
     attr_reader :status, :source, :service_message
 
-    def initialize(msg, status, source = nil, _service_msg = nil)
+    def initialize(msg, status, source = nil, service_message = nil)
       super(msg)
 
       @status = status

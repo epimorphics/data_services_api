@@ -28,7 +28,7 @@ end
 
 describe 'DataServicesAPI::Service', vcr: true do
   let(:api_url) do
-    ENV.fetch('API_URL', 'http://localhost:8888')
+    ENV.fetch('API_SERVICE_URL', 'http://localhost:8888')
   end
 
   let :mock_logger do
@@ -36,9 +36,9 @@ describe 'DataServicesAPI::Service', vcr: true do
   end
 
   before do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
     VCR.insert_cassette(name, record: :new_episodes)
-    @service = DataServicesApi::Service.new(url: api_url, instrumenter: instrumenter, logger: mock_logger)
+    @service = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
   end
 
   after do
@@ -46,8 +46,8 @@ describe 'DataServicesAPI::Service', vcr: true do
   end
 
   it 'should return the service URL' do
-    instrumenter = MockNotifications.new
-    service = DataServicesApi::Service.new(url: 'https://wimbledon.com', instrumenter: instrumenter, logger: mock_logger)
+    mock_notifier = MockNotifications.new
+    service = DataServicesApi::Service.new(url: 'https://wimbledon.com', instrumenter: mock_notifier, logger: mock_logger)
     _(service.url).must_equal('https://wimbledon.com')
   end
 
@@ -63,85 +63,84 @@ describe 'DataServicesAPI::Service', vcr: true do
   end
 
   it 'should retrieve JSON with HTTP GET' do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
 
-    service = DataServicesApi::Service.new(url: api_url, instrumenter: instrumenter, logger: mock_logger)
+    service = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
     json = service.api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
     _(json).wont_be_nil
     _(json['meta']).wont_be_nil
   end
 
   it 'should instrument an API call' do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
 
     DataServicesApi::Service
-      .new(url: api_url, instrumenter: instrumenter, logger: mock_logger)
+      .new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
-    instrumentations = instrumenter.instrumentations
+    instrumentations = mock_notifier.instrumentations
     _(instrumentations.size).must_equal 1
     _(instrumentations.first.first).must_equal 'response.api'
   end
 
   it 'should instrument a failed API call' do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
+    mock_api_url = 'http://localhost:8765'
 
     _ do
       DataServicesApi::Service
-        .new(url: 'http://localhost:8765', instrumenter: instrumenter, logger: mock_logger)
-        .api_get_json('http://localhost:8765/landregistry/id/ukhpi', { '_limit' => 1 })
+        .new(url: mock_api_url, instrumenter: mock_notifier, logger: mock_logger)
+        .api_get_json("#{mock_api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
     end.must_raise
 
-    instrumentations = instrumenter.instrumentations
+    instrumentations = mock_notifier.instrumentations
     _(instrumentations.size).must_equal 1
     _(instrumentations.first.first).must_equal 'connection_failure.api'
   end
 
   it 'should also instrument an API Service Exception' do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
 
     _ do
       DataServicesApi::Service
-        .new(url: api_url, instrumenter: instrumenter, logger: mock_logger)
+        .new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
         .api_get_json("#{api_url}/ceci/nest/pas/une/page", { '_limit' => 1 })
     end.must_raise
 
-    instrumentations = instrumenter.instrumentations
+    instrumentations = mock_notifier.instrumentations
     _(instrumentations.size).must_equal 2
     _(instrumentations[0].first).must_equal 'response.api'
     _(instrumentations[1].first).must_equal 'service_exception.api'
   end
 
   it 'should log the call to the data API' do
-    instrumenter = MockNotifications.new
-    logger = MockLogger.new
+    mock_notifier = MockNotifications.new
 
     DataServicesApi::Service
-      .new(url: api_url, instrumenter: instrumenter, logger: logger)
+      .new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
     # @TODO: add specific constraints on received log messages
-    _(logger.messages).wont_be_empty
+    _(mock_logger.messages).wont_be_empty
   end
 
   it 'should correctly receive a duration in microseconds' do
-    instrumenter = MockNotifications.new
-    new_logger = MockLogger.new
+    mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     DataServicesApi::Service
-      .new(url: api_url, instrumenter: instrumenter, logger: new_logger)
+      .new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
-    _(new_logger).wont_be_nil
+    _(mock_logger).wont_be_nil
 
-    msg_log = new_logger.messages[:info].first
+    mock_log = mock_logger.messages[:info].first
 
-    _(msg_log).wont_be_nil
-    _(msg_log.size).must_equal 2
+    _(mock_log).wont_be_nil
+    _(mock_log.size).must_equal 2
 
-    json = msg_log.first
-
-    duration = JSON.parse(json)['duration']
+    json = mock_log.first
+    duration = JSON.parse(json)['request_time']
 
     _(duration).wont_be_nil
     _(duration).wont_be_nil
