@@ -282,15 +282,20 @@ module DataServicesApi
 
     # Construct the message based on the properties received and return the formatted message
     # @param [String] msg - The initial message to log
-    # @param [String] source - The source of the request
-    # @param [Float] timer - The time it took to process the request
-    # @param [String] _path - The path of the request
-    # @param [String] _query_string - The query string of the request
+    # @param [String] [source] - The source of the request
+    # @param [Float] [timer] - The time it took to process the request
+    # @param [String] [path] - The path of the request
+    # @param [String] [query_string] - The query string of the request
     # @return [String] - The formatted message
-    # TODO: Agree on the format of the log message and the fields to be included in the message
-    def generate_service_message(msg: '', source: '', timer: 0, _path: '', _query_string: '')
-      # msg += " for #{path}" if _path.present?
-      # msg += "?#{query_string}" if _query_string.present?
+    def generate_service_message(fields)
+      raise ServiceException.new('Message is required', 400) unless fields[:msg]
+
+      msg = fields[:msg]
+      source = fields[:source]
+      timer = fields[:timer]
+      # TODO: Agree on the format and fields to be included in the log message
+      # msg += " for #{path}" if in_rails? && fields[:path].present?
+      # msg += "?#{query_string}" if in_rails? && fields[:query_string].present?
       msg += " from the #{source.upcase} service" if in_rails? && source.present?
       msg += " for #{format('%.0f ms', timer)}" if timer.positive?
       msg
