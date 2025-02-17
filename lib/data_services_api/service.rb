@@ -47,13 +47,11 @@ module DataServicesApi
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
 
       logged_fields = {
-        message: generate_service_message(
-          'Processing Data Service API query',
-          URI.parse(http_url).path.split('/').last,
-          elapsed_time,
-          URI.parse(http_url).path,
-          query_string
-        ),
+        message: generate_service_message({
+                                            msg: 'Processing Data Service API query',
+                                            source: URI.parse(http_url).path.split('/').last,
+                                            timer: elapsed_time
+                                          }),
         path: URI.parse(http_url).path,
         query_string: query_string,
         request_status: 'processing',
@@ -285,16 +283,17 @@ module DataServicesApi
     # Construct the message based on the properties received and return the formatted message
     # @param [String] msg - The initial message to log
     # @param [String] source - The source of the request
-    # @param [Float] elapsed_time - The time it took to process the request
+    # @param [Float] timer - The time it took to process the request
     # @param [String] _path - The path of the request
     # @param [String] _query_string - The query string of the request
     # @return [String] - The formatted message
     # TODO: Agree on the format of the log message and the fields to be included in the message
-    def generate_service_message(msg, source, elapsed_time, _path = nil, _query_string = nil)
-      # msg += " for #{path}" if path.present?
-      # msg += "?#{query_string}" if query_string.present?
-      msg.concat(" from the #{source.upcase} service") if in_rails? && source.present?
-      msg.concat(" for #{format('%.0f ms', elapsed_time)}") if elapsed_time.positive?
+    def generate_service_message(msg: '', source: '', timer: 0, _path: '', _query_string: '')
+      # msg += " for #{path}" if _path.present?
+      # msg += "?#{query_string}" if _query_string.present?
+      msg += " from the #{source.upcase} service" if in_rails? && source.present?
+      msg += " for #{format('%.0f ms', timer)}" if timer.positive?
+      msg
     end
   end
 end
