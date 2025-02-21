@@ -48,14 +48,15 @@ module DataServicesApi
 
       logged_fields = {
         message: generate_service_message({
-                                            msg: 'Processing Data Service API query',
+                                            msg: 'Processing request',
                                             source: URI.parse(http_url).path.split('/').last,
                                             timer: elapsed_time
                                           }),
         path: URI.parse(http_url).path,
         query_string: query_string,
         request_status: 'processing',
-        request_time: elapsed_time
+        request_time: elapsed_time,
+        status: response.status || 200,
       }
 
       log_message(logged_fields, 'info')
