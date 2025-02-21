@@ -210,7 +210,7 @@ module DataServicesApi
         'error'
       )
 
-      instrumenter&.instrument('connection_failure.api', exception)
+      instrumenter&.instrument('connection_failure.api', exception: exception)
     end
 
     def instrument_service_exception(http_url, exception, start_time) # rubocop:disable Metrics/MethodLength
@@ -233,7 +233,7 @@ module DataServicesApi
         'error'
       )
 
-      instrumenter&.instrument('service_exception.api', exception)
+      instrumenter&.instrument('service_exception.api', exception: exception)
     end
 
     # Return true if we're currently running in a Rails environment
