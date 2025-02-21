@@ -2,6 +2,20 @@
 
 ## 1.5.2 - 2025-02
 
+- (Jon) Updated the instrumenter calls to include exceptions as a keyword
+  argument for better clarity and consistency.
+  [GH-465](https://github.com/epimorphics/ukhpi/issues/465)
+- (Jon) Refactored logging functionality
+  - Changed how start time is logged to keep it intact.
+  - Cleared out nil values from log fields before logging.
+  - Updated log messages for better clarity on service and timing.
+- (Jon) Refactored error handling in service module
+  - Changed `throw` to `raise` for better exception handling.
+  - Rearranged rescue blocks for clearer flow.
+  - Improved readability and maintainability of the code.
+- (Jon) Updated the logging for data service requests.
+  - Changed log message to be more concise.
+  - Added response status to logged fields for better tracking.
 - (Jon) Added pre-commit and pre-push hooks to prevent committing and pushing
   code that does not pass the linting and testing checks.
 - (Jon) Adjusted the styling and linting rules to ensure the codebase adheres to
@@ -12,17 +26,18 @@
 - (Jon) Updated methods to streamline error handling and logging.
 - (Jon) Refactored connection creation to include retry logic.
 - (Jon) Cleaned up method parameters for better readability.
-- (Jon) Updated the `lib/data_services_api/service.rb` to include the `X-Request-Id`
-  header in the SAPINT requests to match the header received from the apps using
-  the gem.
+- (Jon) Updated the `lib/data_services_api/service.rb` to include the
+  `X-Request-Id` header in the SAPINT requests to match the header received from
+  the apps using the gem.
 - (Jon) Updated the `CHANGELOG.md` to include the new version changes
-- (Jon) Updated the `lib/data_services_api/version.rb` to include the new version
-  number `1.5.2`.
-- (Jon) Updated the `lib/data_services_api/service.rb` for ignorable Rubocop warnings.
+- (Jon) Updated the `lib/data_services_api/version.rb` to include the new
+  version number `1.5.2`.
+- (Jon) Updated the `lib/data_services_api/service.rb` for ignorable Rubocop
+  warnings.
 - (Jon) Implemented the `.github/workflows/publish.yml` workflow to publish the
   gem to the Epimorphics GitHub Package Registry.
-- (Jon) Updated the `README.md` to include the new workflow and the `Makefile` to
-  include the `publish` target to trigger the new workflow.
+- (Jon) Updated the `README.md` to include the new workflow and the `Makefile`
+  to include the `publish` target to trigger the new workflow.
 - (Jon) Unified improved logging for requests and responses to the SAPINT
   service, alongside improved comments and documentation.
 
