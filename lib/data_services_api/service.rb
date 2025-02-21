@@ -79,12 +79,12 @@ module DataServicesApi
       instrument_response(response, start_time, 'received')
 
       ok?(response, http_url) && response
-    rescue ServiceException => e
-      instrument_service_exception(http_url, e, start_time)
-      throw e
     rescue Faraday::ConnectionFailed => e
       instrument_connection_failure(http_url, e, start_time)
-      throw e
+      raise e
+    rescue ServiceException => e
+      instrument_service_exception(http_url, e, start_time)
+      raise e
     end
 
     # Parse the given JSON string into a data structure. Throws an exception if
