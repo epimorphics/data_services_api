@@ -56,7 +56,7 @@ module DataServicesApi
         query_string: query_string,
         request_status: 'processing',
         request_time: elapsed_time,
-        status: response.status || 200,
+        status: response.status || 200
       }
 
       log_message(logged_fields, 'info')
