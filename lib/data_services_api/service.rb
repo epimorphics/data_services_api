@@ -254,8 +254,8 @@ module DataServicesApi
     # @return [void]
     def log_message(log_fields, log_type = 'info')
       puts "\n" if in_rails? && Rails.env.development? && Rails.logger.debug? && log_fields.present?
-
-      start_time = log_fields[:start_time].delete if log_fields[:start_time]
+      # immediately log the time the initial response was received in microseconds
+      start_time = log_fields[:start_time] if log_fields[:start_time]
       # immediately log the receipt time of the response in miroseconds
       end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
@@ -264,18 +264,21 @@ module DataServicesApi
       log_fields[:message] ||= log_fields[:response]&.body
       log_fields[:request_time] ||= duration
       log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
+      log_fields[:start_time] = nil
       log_fields[:status] ||= 200
 
+      # Clear out nil values from the log fields
+      logs = log_fields.compact
       # Log the API responses at the appropriate level requested
       case log_type
       when 'error'
-        logger.error(JSON.generate(log_fields))
+        logger.error(JSON.generate(logs))
       when 'warn'
-        logger.warn(JSON.generate(log_fields))
+        logger.warn(JSON.generate(logs))
       when 'debug'
-        logger.debug(JSON.generate(log_fields))
+        logger.debug(JSON.generate(logs))
       else
-        logger.info(JSON.generate(log_fields))
+        logger.info(JSON.generate(logs))
       end
       logger.flush if logger.respond_to?(:flush)
     end
@@ -297,8 +300,8 @@ module DataServicesApi
       # TODO: Agree on the format and fields to be included in the log message
       # msg += " for #{path}" if in_rails? && fields[:path].present?
       # msg += "?#{query_string}" if in_rails? && fields[:query_string].present?
-      msg += " from the #{source.upcase} service" if in_rails? && source.present?
-      msg += " for #{format('%.0f ms', timer)}" if timer.positive?
+      msg += " for the #{source.upcase} service" if in_rails? && source.present?
+      msg += ", time taken: #{format('%.0f ms', timer)}" if timer.positive?
       msg
     end
   end
