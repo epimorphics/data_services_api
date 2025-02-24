@@ -52,6 +52,7 @@ module DataServicesApi
                                             source: URI.parse(http_url).path.split('/').last,
                                             timer: elapsed_time
                                           }),
+        method: response.env.method.upcase,
         path: URI.parse(http_url).path,
         query_string: query_string,
         request_status: 'processing',
@@ -262,6 +263,7 @@ module DataServicesApi
       duration = (end_time - start_time) / 1000 if start_time
       # parse out the optional parameters and set defaults
       log_fields[:message] ||= log_fields[:response]&.body
+      log_fields[:method] ||= 'GET'
       log_fields[:request_time] ||= duration
       log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
       log_fields[:start_time] = nil
@@ -269,6 +271,8 @@ module DataServicesApi
 
       # Clear out nil values from the log fields
       logs = log_fields.compact
+
+      logs.sort.to_h
       # Log the API responses at the appropriate level requested
       case log_type
       when 'error'

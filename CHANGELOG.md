@@ -2,6 +2,9 @@
 
 ## 1.5.2 - 2025-02
 
+- (Jon) Included the HTTP method in the response log.
+- (Jon) Set a default method value of 'GET' if not provided.
+- (Jon) Ensured logs are sorted and cleaned up before final output.
 - (Jon) Updated the instrumenter calls to include exceptions as a keyword
   argument for better clarity and consistency.
   [GH-465](https://github.com/epimorphics/ukhpi/issues/465)
