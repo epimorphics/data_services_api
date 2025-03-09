@@ -200,7 +200,7 @@ module DataServicesApi
       # log the exception message and status code but only if we're in a Rails environment
       in_rails? && log_message(
         {
-          message: exception.message,
+          message: exception.message.to_s,
           path: URI.parse(http_url).path,
           query_string: URI.parse(http_url).query,
           start_time: start_time || 0,
@@ -223,7 +223,7 @@ module DataServicesApi
       # log the exception message and status code but only if we're in a Rails environment
       in_rails? && log_message(
         {
-          message: exception.message,
+          message: exception.message.to_s,
           path: URI.parse(http_url).path,
           query_string: URI.parse(http_url).query,
           start_time: start_time || 0,
