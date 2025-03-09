@@ -59,21 +59,22 @@ module DataServicesApi
       # next, calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond) - start_time) / 1000 # rubocop:disable Layout/LineLength
       # now parse the query string from the parameters
-      query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
+      logged_fields[:message] = generate_service_message(
+        {
+          msg: "Completed request: #{http_url}",
+          query_string: query_string,
+          timer: elapsed_time
+        }
+      )
 
-      logged_fields = {
-        message: generate_service_message({
-                                            msg: 'Processing request',
-                                            source: URI.parse(http_url).path.split('/').last,
-                                            timer: elapsed_time
-                                          }),
-        method: response.env.method.upcase,
-        path: URI.parse(http_url).path,
-        query_string: query_string,
-        request_status: 'processing',
-        request_time: elapsed_time,
-        status: response.status || 200
-      }
+      unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
+        logged_fields[:path] += "?#{logged_fields[:query_string]}"
+      end
+
+      logged_fields[:method] = response.env.method.upcase
+      logged_fields[:request_status] = 'completed'
+      logged_fields[:request_time] = elapsed_time
+      logged_fields[:status] = response.status
 
       log_message(logged_fields, 'info')
       parse_json(response.body)
