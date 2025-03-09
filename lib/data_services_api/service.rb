@@ -38,6 +38,21 @@ module DataServicesApi
 
     # Get parsed JSON from the given URL
     def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
+
+      logged_fields = {
+        message: generate_service_message({
+                                            msg: "Received request: #{http_url}",
+                                            query_string: query_string,
+                                            timer: nil
+                                          }),
+        path: URI.parse(http_url).path,
+        query_string: query_string,
+        request_status: 'received'
+      }
+
+      log_message(logged_fields, 'info')
+
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # make the request to the API and get the response immediately
       response = get_from_api(http_url, 'application/json', params, options)
