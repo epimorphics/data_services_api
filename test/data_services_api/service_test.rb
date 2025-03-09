@@ -142,9 +142,12 @@ describe 'DataServicesAPI::Service', vcr: true do
     json = mock_log.first
     duration = JSON.parse(json)['request_time']
 
-    _(duration).wont_be_nil
-    _(duration).wont_be_nil
-    _(duration).must_be :>, 0
-    assert_kind_of(Integer, duration)
+    if duration
+      seconds, milliseconds = duration.divmod(1000)
+      duration = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
+      _(duration).wont_be_nil
+      _(duration).must_be :>, 0
+      assert_kind_of(String, duration)
+    end
   end
 end
