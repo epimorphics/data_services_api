@@ -263,8 +263,11 @@ module DataServicesApi
     # @param [Hash] log_fields - The fields to log
     # @param [String] log_fields.message - The message to log
     # @param [Faraday::Response] log_fields.response - The response object
-    # @param [String] log_fields.request_url - The URL of the request
+    # @param [String] log_fields.path - The URL of the request with query string
+    # @param [String] log_fields.query_string - The query string of the request
+    # @param [String] log_fields.method - The HTTP method of the request
     # @param [String] log_fields.request_status - The status of the request (received, processing, completed, error)
+    # @param [Float] log_fields.request_time - The time it took to process the request
     # @param [Float] log_fields.start_time - The time the request was sent
     # @param [Integer] log_fields.status - The status code of the response
     # @param [String] log_type - The type of log to use (info, warn, error, debug)
@@ -278,17 +281,20 @@ module DataServicesApi
       # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       duration = (end_time - start_time) / 1000 if start_time
       # parse out the optional parameters and set defaults
-      log_fields[:message] ||= log_fields[:response]&.body
-      log_fields[:method] ||= 'GET'
+      log_fields[:message] ||= log_fields[:response]&.body.to_s
+      log_fields[:method]
       log_fields[:request_time] ||= duration
       log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
       log_fields[:start_time] = nil
-      log_fields[:status] ||= 200
+      log_fields[:status]
 
       if log_fields[:request_time]
         seconds, milliseconds = log_fields[:request_time].divmod(1000)
         log_fields[:request_time] = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
       end
+      # Clear out unwanted or nil values from the log fields, sort the fields and convert to a hash
+      logs = log_fields.compact.sort.to_h.except('query_string', 'start_time')
+
       # Log the API responses at the appropriate level requested
       case log_type
       when 'error'
