@@ -269,10 +269,10 @@ module DataServicesApi
       log_fields[:start_time] = nil
       log_fields[:status] ||= 200
 
-      # Clear out nil values from the log fields
-      logs = log_fields.compact
-
-      logs.sort.to_h
+      if log_fields[:request_time]
+        seconds, milliseconds = log_fields[:request_time].divmod(1000)
+        log_fields[:request_time] = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
+      end
       # Log the API responses at the appropriate level requested
       case log_type
       when 'error'
