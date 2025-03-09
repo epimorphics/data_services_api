@@ -1,7 +1,31 @@
 # Changelog for DS API rubygem
 
-## 1.5.2 - 2025-02
+## 1.5.2 - 2025-03
 
+- (Jon) Enhance logging parameters for API requests
+  - Updated log_fields to include new parameters: path, query_string, method, and request_time.
+  - Changed existing parameter names for clarity.
+  - Improved handling of default values for message and status.
+  - Added logic to clean up unwanted or nil values from log fields before logging.
+- (Jon) Improve logging for service requests
+  - Updated message generation to include completion details.
+  - Simplified query string handling and added checks for nil/empty.
+  - Changed request status from 'processing' to 'completed'.
+  - Enhanced logged fields with method, path, and elapsed time.
+- (Jon) Added detailed logging for incoming requests.
+  - Included query string in log messages.
+  - Improved service message generation with request details.
+- (Jon) Improve service message generation
+  - Removed unused parameters from the method.
+  - Added handling for query strings and default values.
+  - Improved message formatting with time taken.
+- (Jon) Ensure exception message is a string
+  - Changed exception.message to exception.message.to_s for logging.
+  - Ensures consistency in log output when in Rails environment.
+- (Jon) Enhanced logging with request time formatting
+  - Added conditional check for request time presence
+  - Improved request time format to include seconds and milliseconds
+  - Updated log message structure for clarity
 - (Jon) Included the HTTP method in the response log.
 - (Jon) Set a default method value of 'GET' if not provided.
 - (Jon) Ensured logs are sorted and cleaned up before final output.
