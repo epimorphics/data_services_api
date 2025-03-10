@@ -2,11 +2,31 @@
 
 ## 1.5.2 - 2025-03
 
+- (Jon) Updated API logging and response handling
+  - Changed log message for API request initiation.
+  - Updated log message to reflect number of rows returned.
+  - Modified request status from 'completed' to 'processing'.
+  - Enhanced response parsing by renaming variable for clarity.
+- (Jon)Updated logging for API requests
+  - Changed log messages to include the origin of the URL.
+  - Updated request status from 'received' to 'processing'.
+  - Adjusted completion message to reflect the new origin format.
+- (Jon) Enhanced logging with query string handling
+  - Added conditional to append query string to path if present
+  - Removed duplicate query string handling logic
+  - Cleaned up log fields by setting query string to nil after use
+  - Improved clarity in log message generation
+- (Jon) Cleaned up service message generation
+  - Removed unused query string parameter from method.
+  - Simplified message construction logic.
+  - Improved readability by reducing complexity.
 - (Jon) Enhance logging parameters for API requests
-  - Updated log_fields to include new parameters: path, query_string, method, and request_time.
+  - Updated log_fields to include new parameters: path, query_string, method,
+    and request_time.
   - Changed existing parameter names for clarity.
   - Improved handling of default values for message and status.
-  - Added logic to clean up unwanted or nil values from log fields before logging.
+  - Added logic to clean up unwanted or nil values from log fields before
+    logging.
 - (Jon) Improve logging for service requests
   - Updated message generation to include completion details.
   - Simplified query string handling and added checks for nil/empty.
