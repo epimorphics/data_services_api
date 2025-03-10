@@ -43,7 +43,6 @@ module DataServicesApi
       logged_fields = {
         message: generate_service_message({
                                             msg: "Received request: #{http_url}",
-                                            query_string: query_string,
                                             timer: nil
                                           }),
         path: URI.parse(http_url).path,
@@ -62,7 +61,6 @@ module DataServicesApi
       logged_fields[:message] = generate_service_message(
         {
           msg: "Completed request: #{http_url}",
-          query_string: query_string,
           timer: elapsed_time
         }
       )
@@ -313,17 +311,12 @@ module DataServicesApi
     # Construct the message based on the properties received and return the formatted message
     # @param [String] msg - The initial message to log
     # @param [Float] [timer] - The time it took to process the request
-    # @param [String] [query_string] - The query string of the request
     # @return [String] - The formatted message
-    def generate_service_message(fields) # rubocop:disable Metrics/CyclomaticComplexity
+    def generate_service_message(fields)
       raise ServiceException.new('Message is required', 400) unless fields[:msg]
 
       msg = fields[:msg]
       timer = fields[:timer] || 0
-      query = fields[:query_string] || ''
-      query_string = query.is_a?(Hash) ? query.to_query : query
-
-      msg += "?#{query_string}" if in_rails? && query_string.present?
       msg += ", time taken: #{format('%.0f ms', timer)}" if timer.positive?
       msg
     end
