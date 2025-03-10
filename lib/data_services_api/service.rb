@@ -293,7 +293,7 @@ module DataServicesApi
         log_fields[:request_time] = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
       end
       # Clear out unwanted or nil values from the log fields, sort the fields and convert to a hash
-      logs = log_fields.compact.sort.to_h.reject { |k, v| %w[query_string start_time].include? k }
+      logs = log_fields.compact.sort.to_h.reject { |k, _v| %w[query_string start_time].include? k }
 
       # Log the API responses at the appropriate level requested
       case log_type
