@@ -71,7 +71,7 @@ module DataServicesApi
       # log the response and status code
       logged_fields[:message] = generate_service_message(
         {
-          msg: "API returned #{returned_rows} rows",
+          msg: "API returned #{returned_rows} row#{returned_rows == 1 ? '' : 's'}",
           timer: elapsed_time
         }
       )
