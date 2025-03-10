@@ -45,7 +45,7 @@ module DataServicesApi
 
       logged_fields = {
         message: generate_service_message({
-                                            msg: "Making API request to #{origin}",
+                                            msg: "Calling API: #{origin}",
                                             timer: nil
                                           }),
         path: URI.parse(http_url).path,
@@ -64,21 +64,25 @@ module DataServicesApi
       response = get_from_api(http_url, 'application/json', params, options)
       # next, calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond) - start_time) / 1000 # rubocop:disable Layout/LineLength
-      # now parse the query string from the parameters
+      # now parse the response
+      response_body = parse_json(response.body)
+      # log the number of rows returned
+      returned_rows = response_body['items'].length
+      # log the response and status code
       logged_fields[:message] = generate_service_message(
         {
-          msg: "Completed API request to #{origin}",
+          msg: "API returned #{returned_rows} rows",
           timer: elapsed_time
         }
       )
 
       logged_fields[:method] = response.env.method.upcase
-      logged_fields[:request_status] = 'completed'
+      logged_fields[:request_status] = 'processing'
       logged_fields[:request_time] = elapsed_time
       logged_fields[:status] = response.status
 
       log_message(logged_fields)
-      parse_json(response.body)
+      response_body
     end
 
     def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
