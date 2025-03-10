@@ -290,7 +290,7 @@ module DataServicesApi
 
       if log_fields[:request_time]
         seconds, milliseconds = log_fields[:request_time].divmod(1000)
-        log_fields[:request_time] = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
+        log_fields[:request_time] = format('%.0f.%03d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
       end
       # Clear out unwanted or nil values from the log fields, sort the fields and convert to a hash
       logs = log_fields.compact.sort.to_h.reject { |k, _v| %w[query_string start_time].include? k }
