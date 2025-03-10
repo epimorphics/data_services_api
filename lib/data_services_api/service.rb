@@ -40,44 +40,49 @@ module DataServicesApi
     def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
 
+      # parse out the origin from the URL, this is the host but including protocol and port
+      origin = http_url.split(URI.parse(http_url).path).first
+
       logged_fields = {
         message: generate_service_message({
-                                            msg: "Received request: #{http_url}",
-                                            query_string: query_string,
+                                            msg: "Calling API: #{origin}",
                                             timer: nil
                                           }),
         path: URI.parse(http_url).path,
         query_string: query_string,
-        request_status: 'received'
+        request_status: 'processing'
       }
 
-      log_message(logged_fields, 'info')
+      unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
+        logged_fields[:path] += "?#{logged_fields[:query_string]}"
+      end
+
+      log_message(logged_fields)
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # make the request to the API and get the response immediately
       response = get_from_api(http_url, 'application/json', params, options)
       # next, calculate the elapsed time in milliseconds by dividing the difference in time by 1000
       elapsed_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond) - start_time) / 1000 # rubocop:disable Layout/LineLength
-      # now parse the query string from the parameters
+      # now parse the response
+      response_body = parse_json(response.body)
+      # log the number of rows returned
+      returned_rows = response_body['items'].length
+      # log the response and status code
       logged_fields[:message] = generate_service_message(
         {
-          msg: "Completed request: #{http_url}",
-          query_string: query_string,
+          msg: "API returned #{returned_rows} rows",
           timer: elapsed_time
         }
       )
 
-      unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
-        logged_fields[:path] += "?#{logged_fields[:query_string]}"
-      end
-
       logged_fields[:method] = response.env.method.upcase
-      logged_fields[:request_status] = 'completed'
+      logged_fields[:request_status] = 'processing'
       logged_fields[:request_time] = elapsed_time
       logged_fields[:status] = response.status
 
-      log_message(logged_fields, 'info')
-      parse_json(response.body)
+      log_message(logged_fields)
+      response_body
     end
 
     def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
@@ -292,8 +297,13 @@ module DataServicesApi
         seconds, milliseconds = log_fields[:request_time].divmod(1000)
         log_fields[:request_time] = format('%.0f.%03d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
       end
-      # Clear out unwanted or nil values from the log fields, sort the fields and convert to a hash
-      logs = log_fields.compact.sort.to_h.reject { |k, _v| %w[query_string start_time].include? k }
+
+      if log_fields[:query_string]
+        log_fields[:path] += "?#{log_fields[:query_string]}" unless log_fields[:path].to_s.include?('?') # rubocop:disable Layout/LineLength
+        log_fields[:query_string] = nil
+      end
+      # Clear out nil values from the log fields, sort the fields and convert to a hash
+      logs = log_fields.compact.sort.to_h
 
       # Log the API responses at the appropriate level requested
       case log_type
@@ -313,17 +323,12 @@ module DataServicesApi
     # Construct the message based on the properties received and return the formatted message
     # @param [String] msg - The initial message to log
     # @param [Float] [timer] - The time it took to process the request
-    # @param [String] [query_string] - The query string of the request
     # @return [String] - The formatted message
-    def generate_service_message(fields) # rubocop:disable Metrics/CyclomaticComplexity
+    def generate_service_message(fields)
       raise ServiceException.new('Message is required', 400) unless fields[:msg]
 
       msg = fields[:msg]
       timer = fields[:timer] || 0
-      query = fields[:query_string] || ''
-      query_string = query.is_a?(Hash) ? query.to_query : query
-
-      msg += "?#{query_string}" if in_rails? && query_string.present?
       msg += ", time taken: #{format('%.0f ms', timer)}" if timer.positive?
       msg
     end
