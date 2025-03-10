@@ -50,7 +50,11 @@ module DataServicesApi
         request_status: 'received'
       }
 
-      log_message(logged_fields, 'info')
+      unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
+        logged_fields[:path] += "?#{logged_fields[:query_string]}"
+      end
+
+      log_message(logged_fields)
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       # make the request to the API and get the response immediately
@@ -64,10 +68,6 @@ module DataServicesApi
           timer: elapsed_time
         }
       )
-
-      unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
-        logged_fields[:path] += "?#{logged_fields[:query_string]}"
-      end
 
       logged_fields[:method] = response.env.method.upcase
       logged_fields[:request_status] = 'completed'
@@ -290,8 +290,13 @@ module DataServicesApi
         seconds, milliseconds = log_fields[:request_time].divmod(1000)
         log_fields[:request_time] = format('%.0f.%03d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
       end
-      # Clear out unwanted or nil values from the log fields, sort the fields and convert to a hash
-      logs = log_fields.compact.sort.to_h.reject { |k, _v| %w[query_string start_time].include? k }
+
+      if log_fields[:query_string]
+        log_fields[:path] += "?#{log_fields[:query_string]}" unless log_fields[:path].to_s.include?('?') # rubocop:disable Layout/LineLength
+        log_fields[:query_string] = nil
+      end
+      # Clear out nil values from the log fields, sort the fields and convert to a hash
+      logs = log_fields.compact.sort.to_h
 
       # Log the API responses at the appropriate level requested
       case log_type
