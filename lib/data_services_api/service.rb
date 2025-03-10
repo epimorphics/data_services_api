@@ -40,14 +40,17 @@ module DataServicesApi
     def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
 
+      # parse out the origin from the URL, this is the host but including protocol and port
+      origin = http_url.split(URI.parse(http_url).path).first
+
       logged_fields = {
         message: generate_service_message({
-                                            msg: "Received request: #{http_url}",
+                                            msg: "Making API request to #{origin}",
                                             timer: nil
                                           }),
         path: URI.parse(http_url).path,
         query_string: query_string,
-        request_status: 'received'
+        request_status: 'processing'
       }
 
       unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
@@ -64,7 +67,7 @@ module DataServicesApi
       # now parse the query string from the parameters
       logged_fields[:message] = generate_service_message(
         {
-          msg: "Completed request: #{http_url}",
+          msg: "Completed API request to #{origin}",
           timer: elapsed_time
         }
       )
@@ -74,7 +77,7 @@ module DataServicesApi
       logged_fields[:request_time] = elapsed_time
       logged_fields[:status] = response.status
 
-      log_message(logged_fields, 'info')
+      log_message(logged_fields)
       parse_json(response.body)
     end
 
