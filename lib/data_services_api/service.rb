@@ -67,7 +67,7 @@ module DataServicesApi
       # now parse the response
       response_body = parse_json(response.body)
       # log the number of rows returned
-      returned_rows = response_body['items'].length
+      returned_rows = response_body['items'] ? response_body['items'].size : 0
       # log the response and status code
       logged_fields[:message] = generate_service_message(
         {
