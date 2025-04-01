@@ -1,5 +1,14 @@
 # Changelog for DS API rubygem
 
+## 1.5.3 - 2025-04
+
+- (Jon) Improved API request logging with query string information, which can
+   assist in debugging and monitoring.
+- (Jon) Reordered rescue statements to ensure error handling priority;
+   connection failures are now handled after service exceptions.
+- (Jon) Resolved a bug that caused an error when the API returns a nil item list
+   by providing a default value of 0.
+
 ## 1.5.2 - 2025-03
 
 - (Jon) Updated API logging and response handling

@@ -38,11 +38,11 @@ module DataServicesApi
 
     # Get parsed JSON from the given URL
     def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+      # create a well formatted query string from the params hash to be used in the logging
       query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
-
       # parse out the origin from the URL, this is the host but including protocol and port
       origin = http_url.split(URI.parse(http_url).path).first
-
+      # initiate the message to be logged
       logged_fields = {
         message: generate_service_message({
                                             msg: "Calling API: #{origin}",
@@ -67,7 +67,7 @@ module DataServicesApi
       # now parse the response
       response_body = parse_json(response.body)
       # log the number of rows returned
-      returned_rows = response_body['items'].length
+      returned_rows = response_body['items'] ? response_body['items'].size : 0
       # log the response and status code
       logged_fields[:message] = generate_service_message(
         {
@@ -101,11 +101,11 @@ module DataServicesApi
       instrument_response(response, start_time, 'received')
 
       ok?(response, http_url) && response
-    rescue Faraday::ConnectionFailed => e
-      instrument_connection_failure(http_url, e, start_time)
-      raise e
     rescue ServiceException => e
       instrument_service_exception(http_url, e, start_time)
+      raise e
+    rescue Faraday::ConnectionFailed => e
+      instrument_connection_failure(http_url, e, start_time)
       raise e
     end
 
