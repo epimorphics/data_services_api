@@ -1,5 +1,10 @@
 # Changelog for DS API rubygem
 
+## 1.5.4 - 2025-04
+
+- (Jon) Adds returned row count to logs when the count is a positive integer.
+  [GH-272](https://github.com/epimorphics/ppd-explorer/issues/272)
+
 ## 1.5.3 - 2025-04
 
 - (Jon) Improved API request logging with query string information, which can
