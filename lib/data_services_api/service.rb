@@ -77,6 +77,7 @@ module DataServicesApi
       )
 
       logged_fields[:method] = response.env.method.upcase
+      logged_fields[:returned_rows] = returned_rows if returned_rows.positive?
       logged_fields[:request_status] = 'processing'
       logged_fields[:request_time] = elapsed_time
       logged_fields[:status] = response.status
