@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Ruby wrapper for Epimorphics Data Services API'
   spec.homepage      = 'https://github.com/epimorphics/data-API-ruby'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 2.6'
+  spec.required_ruby_version = '>= 3.4'
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
@@ -23,7 +23,10 @@ Gem::Specification.new do |spec|
 
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.add_dependency 'faraday_middleware', '~> 1.2.0'
-  spec.add_dependency 'json', '~> 2.6.1'
-  spec.add_dependency 'yajl-ruby', '~> 1.4.1'
+  spec.add_dependency 'faraday', '~> 2.13'
+  spec.add_dependency 'faraday-encoding', '~> 0.0.6'
+  spec.add_dependency 'faraday-follow_redirects', '~> 0.3.0'
+  spec.add_dependency 'faraday-retry', '~> 2.0'
+  spec.add_dependency 'json', '~> 2.0'
+  spec.add_dependency 'yajl-ruby', '~> 1.4'
 end
