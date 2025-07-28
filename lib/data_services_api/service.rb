@@ -49,7 +49,7 @@ module DataServicesApi
                                             timer: nil
                                           }),
         path: URI.parse(http_url).path,
-        query_string: query_string,
+        query_string:,
         request_status: 'processing'
       }
 
@@ -102,11 +102,11 @@ module DataServicesApi
       instrument_response(response, start_time, 'received')
 
       ok?(response, http_url) && response
-    rescue ServiceException => e
-      instrument_service_exception(http_url, e, start_time)
-      raise e
     rescue Faraday::ConnectionFailed => e
       instrument_connection_failure(http_url, e, start_time)
+      raise e
+    rescue ServiceException => e
+      instrument_service_exception(http_url, e, start_time)
       raise e
     end
 
@@ -151,20 +151,27 @@ module DataServicesApi
       ok?(response, http_url) && response
     end
 
-    def create_http_connection(http_url, auth = false)
-      Faraday.new(url: http_url) do |faraday|
-        faraday.use Faraday::Request::UrlEncoded
-        faraday.use Faraday::Request::Retry
-        faraday.use FaradayMiddleware::FollowRedirects
+    def create_http_connection(http_url, auth = false) # rubocop:disable Metrics/MethodLength
+      retry_options = {
+        max: 2,
+        interval: 0.05,
+        interval_randomness: 0.5,
+        backoff_factor: 2,
+        exceptions: [Faraday::TimeoutError, Faraday::ConnectionFailed]
+      }
 
+      Faraday.new(url: http_url) do |config|
+        config.use Faraday::Request::UrlEncoded
+        config.use Faraday::FollowRedirects::Middleware
+
+        config.request :authorization, :basic, api_user, api_pw if auth
         # instrument the request to log the time it takes to complete but only if we're in a Rails environment
-        faraday.request :instrumentation, name: 'requests.api' if in_rails?
+        config.request :instrumentation, name: 'requests.api' if in_rails?
+        config.request :retry, retry_options
 
-        # set the basic auth if required
-        faraday.basic_auth(api_user, api_pw) if auth
-
-        # setting the adapter must be the final step, otherwise get a warning from Faraday
-        faraday.adapter(:net_http)
+        config.response :json
+        config.response :raise_error
+        with_logger_in_rails(config)
       end
     end
 
@@ -208,7 +215,7 @@ module DataServicesApi
       elapsed_time = (end_time - start_time) / 1000
       instrumenter&.instrument(
         'response.api',
-        response: response,
+        response:,
         duration: elapsed_time
       )
     end
@@ -233,7 +240,7 @@ module DataServicesApi
         'error'
       )
 
-      instrumenter&.instrument('connection_failure.api', exception: exception)
+      instrumenter&.instrument('connection_failure.api', exception:)
     end
 
     def instrument_service_exception(http_url, exception, start_time) # rubocop:disable Metrics/MethodLength
@@ -256,12 +263,25 @@ module DataServicesApi
         'error'
       )
 
-      instrumenter&.instrument('service_exception.api', exception: exception)
+      instrumenter&.instrument('service_exception.api', exception:)
     end
 
     # Return true if we're currently running in a Rails environment
     def in_rails?
       defined?(Rails)
+    end
+
+    def with_logger_in_rails(config)
+      return config.response :logger unless defined?(Rails)
+
+      level = Rails.env.production? ? :info : :debug
+
+      config.response :logger, Rails.logger, {
+        headers: true,
+        bodies: false,
+        errors: true,
+        log_level: level.to_sym
+      }
     end
 
     # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
