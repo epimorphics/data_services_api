@@ -168,10 +168,10 @@ module DataServicesApi
         # instrument the request to log the time it takes to complete but only if we're in a Rails environment
         config.request :instrumentation, name: 'requests.api' if in_rails?
         config.request :retry, retry_options
+        with_logger_in_rails(config)
 
         config.response :json
         config.response :raise_error
-        with_logger_in_rails(config)
       end
     end
 
