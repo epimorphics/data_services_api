@@ -102,7 +102,7 @@ module DataServicesApi
       instrument_response(response, start_time, 'received')
 
       ok?(response, http_url) && response
-    rescue Faraday::ConnectionFailed => e
+    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
       instrument_connection_failure(http_url, e, start_time)
       raise e
     rescue ServiceException => e
