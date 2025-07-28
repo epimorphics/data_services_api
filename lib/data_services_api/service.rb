@@ -275,7 +275,7 @@ module DataServicesApi
     end
 
     def with_logger_in_rails(config)
-      return config.response :logger unless defined?(Rails)
+      return config.response :logger unless in_rails?
 
       level = Rails.env.production? ? :info : :debug
 
