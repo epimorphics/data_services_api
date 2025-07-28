@@ -48,7 +48,7 @@ module DataServicesApi
     end
 
     def op(oper, attribute, value)
-      oper = oper.is_a?(Symbol) ? "@#{oper}" : oper
+      oper = "@#{oper}" if oper.is_a?(Symbol)
       raise NameError, "Unrecognised operation #{oper}" unless OPERATIONS.include?(oper)
 
       relational(oper, attribute, value)
