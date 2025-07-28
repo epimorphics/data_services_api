@@ -22,7 +22,8 @@ GEM
       bigdecimal
       rexml
     docile (1.4.1)
-    excon (0.90.0)
+    excon (1.2.8)
+      logger
     faraday (2.13.4)
       faraday-net_http (>= 2.0, < 3.5)
       json
