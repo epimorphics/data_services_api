@@ -108,4 +108,56 @@ http_interactions:
       encoding: UTF-8
       string: '{"meta":{"@id":"http://localhost//landregistry/id/ukhpi?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom","publisher":"","license":"","licenseName":"","comment":"","version":"0.1","hasFormat":["http://localhost//landregistry/id/ukhpi.rdf?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom","http://localhost//landregistry/id/ukhpi.html?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom","http://localhost//landregistry/id/ukhpi.geojson?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom","http://localhost//landregistry/id/ukhpi.csv?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom","http://localhost//landregistry/id/ukhpi.ttl?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom","http://localhost//landregistry/id/ukhpi.json?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http%3A%2F%2Flandregistry.data.gov.uk%2Fid%2Fregion%2Funited-kingdom"],"limit":1},"items":[{"@id":"http://landregistry.data.gov.uk/data/ukhpi/region/united-kingdom/month/2021-10","refRegion":{"@id":"http://landregistry.data.gov.uk/id/region/united-kingdom"},"refMonth":"2021-10","averagePrice":268349,"averagePriceSA":264786,"housePriceIndex":140.74,"housePriceIndexSA":138.87,"percentageAnnualChange":10.17,"percentageChange":-1.11,"averagePriceDetached":425121,"housePriceIndexDetached":147.75,"percentageChangeDetached":0.75,"percentageAnnualChangeDetached":13.99,"averagePriceSemiDetached":256537,"housePriceIndexSemiDetached":143.49,"percentageChangeSemiDetached":-1.64,"percentageAnnualChangeSemiDetached":10.39,"averagePriceTerraced":216481,"housePriceIndexTerraced":140.62,"percentageChangeTerraced":-2.88,"percentageAnnualChangeTerraced":8.79,"averagePriceFlatMaisonette":222381,"housePriceIndexFlatMaisonette":128.40,"percentageChangeFlatMaisonette":-0.17,"percentageAnnualChangeFlatMaisonette":6.63,"refPeriodStart":"2021-10-01","refPeriodDuration":1}]}'
   recorded_at: Tue, 25 Jan 2022 17:56:23 GMT
-recorded_with: VCR 6.0.0
+- request:
+    method: get
+    uri: https://hmlr-dev-pres.epimorphics.net/landregistry/id/ukhpi?_limit=1&_sort=-refMonth&mineq-refMonth=2019-01&refRegion=http://landregistry.data.gov.uk/id/region/united-kingdom
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      User-Agent:
+      - Faraday v2.13.4
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Cache-Control:
+      - no-cache
+      Content-Type:
+      - text/html; charset=utf-8
+      Date:
+      - Mon, 28 Jul 2025 11:54:20 GMT
+      Referrer-Policy:
+      - strict-origin-when-cross-origin
+      Server:
+      - nginx/1.27.5
+      X-Cache-Status:
+      - MISS
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - 59aa874f2328dbf87c3c7ddb6bd79140
+      X-Runtime:
+      - '0.003676'
+      X-Xss-Protection:
+      - 1; mode=block
+      Content-Length:
+      - '0'
+      Connection:
+      - keep-alive
+    body:
+      encoding: UTF-8
+      string: ''
+  recorded_at: Mon, 28 Jul 2025 11:54:20 GMT
+recorded_with: VCR 6.3.1
