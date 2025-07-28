@@ -201,14 +201,14 @@ module DataServicesApi
     end
 
     def report_json_failure(json)
-      msg = "JSON result was not parsed correctly: #{json.slice(0, 1000)}"
+      msg = "JSON result was not parsed correctly: #{json.to_s.slice(0, 1000)}"
 
       if in_rails?
         # msg = 'JSON result was not parsed correctly (no temp file saved)'
         logger.error(msg)
       end
 
-      throw msg
+      raise ServiceException.new(msg, 500, nil, json)
     end
 
     def instrument_response(response, start_time, _request_status)
