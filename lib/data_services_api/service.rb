@@ -112,10 +112,10 @@ module DataServicesApi
 
     # Parse the given JSON string into a data structure. Throws an exception if
     # parsing fails
-    def parse_json(json) # rubocop:disable Metrics/MethodLength
+    def parse_json(json) # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       result = nil
-
-      json_hash = parser.parse(StringIO.new(json)) do |json_chunk|
+      jsonified = json.is_a?(String) ? json : json.to_json
+      json_hash = parser.parse(jsonified) do |json_chunk|
         if result
           result = [result] unless result.is_a?(Array)
           result << json_chunk
@@ -125,6 +125,7 @@ module DataServicesApi
       end
 
       report_json_failure(json) unless result || json_hash
+
       result || json_hash
     end
 
