@@ -36,12 +36,12 @@ describe 'DataServiceApi::Dataset' do
   end
 
   before do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
     VCR.insert_cassette(name, record: :new_episodes)
 
     mock_logger.expects(:info).at_least(0)
 
-    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: instrumenter, logger: mock_logger).dataset('ukhpi')
+    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier, logger: mock_logger).dataset('ukhpi')
   end
 
   after do
