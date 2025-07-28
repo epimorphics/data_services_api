@@ -43,8 +43,8 @@ GEM
     logger (1.7.0)
     minispec-metadata (2.0.0)
       minitest
-    minitest (5.15.0)
-    minitest-rg (5.2.0)
+    minitest (5.25.5)
+    minitest-rg (5.3.0)
       minitest (~> 5.0)
     minitest-vcr (1.4.0)
       minispec-metadata (~> 2.0)
