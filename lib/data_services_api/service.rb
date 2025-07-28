@@ -194,7 +194,10 @@ module DataServicesApi
     end
 
     def as_http_api(api)
-      api.start_with?('http') ? api : "#{url}#{api}"
+      return api if api.start_with?('http://', 'https://')
+
+      # if the API is a relative path, append to the base URL
+      URI::HTTP.build(host: @url, path: api).to_s
     end
 
     def report_json_failure(json)
