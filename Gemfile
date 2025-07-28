@@ -5,10 +5,11 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in data-api.gemspec
 gemspec
 
+gem 'byebug', group: %i[development test], require: false
+
 # Add development dependencies here though as they are not required to run the gem
 group :development, :test do
   gem 'bundler'
-  gem 'byebug'
   gem 'excon'
   gem 'json_expressions'
   gem 'minitest'
