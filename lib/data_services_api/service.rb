@@ -105,7 +105,7 @@ module DataServicesApi
     rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
       instrument_connection_failure(http_url, e, start_time)
       raise e
-    rescue ServiceException => e
+    rescue Faraday::ResourceNotFound, ServiceException => e
       instrument_service_exception(http_url, e, start_time)
       raise e
     end
@@ -158,7 +158,7 @@ module DataServicesApi
         interval: 0.05,
         interval_randomness: 0.5,
         backoff_factor: 2,
-        exceptions: [Faraday::TimeoutError, Faraday::ConnectionFailed]
+        exceptions: [Faraday::TimeoutError, Faraday::ConnectionFailed, Faraday::ResourceNotFound]
       }
 
       Faraday.new(url: http_url) do |config|

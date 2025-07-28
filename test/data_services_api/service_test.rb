@@ -84,8 +84,9 @@ describe 'DataServicesAPI::Service', vcr: true do
   end
 
   it 'should instrument a failed API call' do
-    mock_notifier = MockNotifications.new
     mock_api_url = 'http://localhost:8765'
+    mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     _ do
       DataServicesApi::Service
@@ -100,6 +101,7 @@ describe 'DataServicesAPI::Service', vcr: true do
 
   it 'should also instrument an API Service Exception' do
     mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     _ do
       DataServicesApi::Service
@@ -108,13 +110,13 @@ describe 'DataServicesAPI::Service', vcr: true do
     end.must_raise
 
     instrumentations = mock_notifier.instrumentations
-    _(instrumentations.size).must_equal 2
-    _(instrumentations[0].first).must_equal 'response.api'
-    _(instrumentations[1].first).must_equal 'service_exception.api'
+    _(instrumentations.size).must_equal 1
+    _(instrumentations.first.first).must_equal 'service_exception.api'
   end
 
   it 'should log the call to the data API' do
     mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     DataServicesApi::Service
       .new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
