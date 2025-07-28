@@ -69,7 +69,15 @@ describe 'DataServiceApi::Dataset' do
       end
     end.new
 
+    # Ensure the query responds to the expected methods
+    _(query).must_respond_to :terms
+    _(query).must_respond_to :to_json
+    # Ensure the query terms are a Hash
+    _(query.terms).must_be_kind_of Hash
+
+    # Perform the query
     json = @dataset.query(query)
+    # Check the response
     _(json).wont_be_nil
     _(json.size).must_be :>, 0
   end
