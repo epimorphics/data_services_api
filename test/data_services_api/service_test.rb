@@ -134,8 +134,8 @@ describe 'DataServicesAPI::Service', vcr: true do
 
     _(mock_logger).wont_be_nil
 
-    mock_log = mock_logger.messages[:info].first
-
+    # Check the last logged message for duration
+    mock_log = mock_logger.messages[:info].last
     _(mock_log).wont_be_nil
     _(mock_log.size).must_equal 2
 
@@ -143,10 +143,7 @@ describe 'DataServicesAPI::Service', vcr: true do
     duration = JSON.parse(json)['request_time']
 
     if duration
-      seconds, milliseconds = duration.divmod(1000)
-      duration = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
-      _(duration).wont_be_nil
-      _(duration).must_be :>, 0
+      _(duration.to_f).must_be :>, 0
       assert_kind_of(String, duration)
     end
   end
