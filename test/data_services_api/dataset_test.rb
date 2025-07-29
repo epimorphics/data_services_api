@@ -36,12 +36,12 @@ describe 'DataServiceApi::Dataset' do
   end
 
   before do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
     VCR.insert_cassette(name, record: :new_episodes)
 
     mock_logger.expects(:info).at_least(0)
 
-    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: instrumenter, logger: mock_logger).dataset('ukhpi')
+    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier, logger: mock_logger).dataset('ukhpi')
   end
 
   after do
@@ -69,7 +69,15 @@ describe 'DataServiceApi::Dataset' do
       end
     end.new
 
+    # Ensure the query responds to the expected methods
+    _(query).must_respond_to :terms
+    _(query).must_respond_to :to_json
+    # Ensure the query terms are a Hash
+    _(query.terms).must_be_kind_of Hash
+
+    # Perform the query
     json = @dataset.query(query)
+    # Check the response
     _(json).wont_be_nil
     _(json.size).must_be :>, 0
   end

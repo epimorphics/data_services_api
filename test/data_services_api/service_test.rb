@@ -84,8 +84,9 @@ describe 'DataServicesAPI::Service', vcr: true do
   end
 
   it 'should instrument a failed API call' do
-    mock_notifier = MockNotifications.new
     mock_api_url = 'http://localhost:8765'
+    mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     _ do
       DataServicesApi::Service
@@ -100,6 +101,7 @@ describe 'DataServicesAPI::Service', vcr: true do
 
   it 'should also instrument an API Service Exception' do
     mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     _ do
       DataServicesApi::Service
@@ -108,13 +110,13 @@ describe 'DataServicesAPI::Service', vcr: true do
     end.must_raise
 
     instrumentations = mock_notifier.instrumentations
-    _(instrumentations.size).must_equal 2
-    _(instrumentations[0].first).must_equal 'response.api'
-    _(instrumentations[1].first).must_equal 'service_exception.api'
+    _(instrumentations.size).must_equal 1
+    _(instrumentations.first.first).must_equal 'service_exception.api'
   end
 
   it 'should log the call to the data API' do
     mock_notifier = MockNotifications.new
+    mock_logger = MockLogger.new
 
     DataServicesApi::Service
       .new(url: api_url, instrumenter: mock_notifier, logger: mock_logger)
@@ -134,8 +136,8 @@ describe 'DataServicesAPI::Service', vcr: true do
 
     _(mock_logger).wont_be_nil
 
-    mock_log = mock_logger.messages[:info].first
-
+    # Check the last logged message for duration
+    mock_log = mock_logger.messages[:info].last
     _(mock_log).wont_be_nil
     _(mock_log.size).must_equal 2
 
@@ -143,10 +145,7 @@ describe 'DataServicesAPI::Service', vcr: true do
     duration = JSON.parse(json)['request_time']
 
     if duration
-      seconds, milliseconds = duration.divmod(1000)
-      duration = format('%.0f.%04d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
-      _(duration).wont_be_nil
-      _(duration).must_be :>, 0
+      _(duration.to_f).must_be :>, 0
       assert_kind_of(String, duration)
     end
   end

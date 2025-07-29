@@ -8,11 +8,11 @@ describe 'DataServicesAPI', 'the data services API' do
   end
 
   it 'should be constructable with a given URL' do
-    instrumenter = MockNotifications.new
+    mock_notifier = MockNotifications.new
     mock_logger = mock('logger')
     mock_logger.expects(:info).at_least(0)
 
-    dsapi = DataServicesApi::Service.new(url: 'foo/bar', instrumenter: instrumenter, logger: mock_logger)
+    dsapi = DataServicesApi::Service.new(url: 'foo/bar', instrumenter: mock_notifier, logger: mock_logger)
 
     _(dsapi.url).must_match(%r{foo/bar})
   end

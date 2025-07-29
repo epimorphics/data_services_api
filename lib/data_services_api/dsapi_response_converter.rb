@@ -38,7 +38,7 @@ module DataServicesApi
       return { "#{@dataset_name}:#{sapint_key}" => sapint_value } unless sapint_value.is_a?(Hash)
 
       sapint_value.transform_keys do |key|
-        "#{@dataset_name}:#{sapint_key}#{key == '@id' ? '' : key.capitalize}"
+        "#{@dataset_name}:#{sapint_key}#{key.capitalize unless key == '@id'}"
       end
     end
 

@@ -1,5 +1,15 @@
 # Changelog for DS API rubygem
 
+## 1.6.0 - 2025-07
+
+- Update TargetRubyVersion to 3.4 for compatibility
+- Refresh dependencies for better stability
+- Refactor logging and error handling for clarity
+- Enhance JSON parsing reliability
+- Revise VCR setups with new HTTP client
+- Expand .gitignore to cover more files
+- Include Gemfile.lock for consistent dependencies
+
 ## 1.5.4 - 2025-04
 
 - (Jon) Adds returned row count to logs when the count is a positive integer.

@@ -17,7 +17,10 @@ require 'bundler'
 Bundler.require(:default, :development, :test)
 
 require 'faraday'
-require 'faraday_middleware'
+require 'faraday/encoding'
+require 'faraday/follow_redirects'
+require 'faraday/retry'
+
 require 'byebug'
 require 'mocha/minitest'
 
