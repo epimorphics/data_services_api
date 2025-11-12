@@ -51,7 +51,7 @@ GEM
       minispec-metadata (~> 2.0)
       minitest (>= 4.7.5)
       vcr (>= 2.9)
-    mocha (2.7.1)
+    mocha (2.8.0)
       ruby2_keywords (>= 0.0.5)
     mutex_m (0.3.0)
     net-http (0.6.0)
