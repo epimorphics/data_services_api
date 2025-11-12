@@ -21,24 +21,32 @@ ${AUTH}:
 ${GEM}: ${SPEC} ./lib/${NAME}/version.rb
 	gem build ${SPEC}
 
+assets:
+	@echo "Installing assets for ${NAME} gem..."
+	@bundle install
+	@echo "Assets for ${NAME} gem are up to date."
+
 auth: ${AUTH}
 
-build: gem
+build: clean gem
+
+clean:
+	@echo "Cleaning up ${NAME} gem..."
+	@bundle exec rake clean clobber
+	@rm -rf ${GEM}
 
 gem: ${GEM}
 	@echo ${GEM}
 
-test: gem
-	@bundle install
-	@bundle exec rake test
+lint:
+	@echo "Running RuboCop for ${NAME} gem..."
+	@bundle exec rubocop
+	@echo "RuboCop checks completed."
 
 publish: ${AUTH} ${GEM}
 	@echo Publishing package ${NAME}:${VERSION} to ${OWNER} ...
 	@gem push --key github --host ${GPR} ${GEM}
 	@echo Done.
-
-clean:
-	@rm -rf ${GEM}
 
 realclean: clean
 	@rm -rf ${AUTH}
@@ -47,3 +55,15 @@ tags:
 	@echo name=${NAME}
 	@echo owner=${OWNER}
 	@echo version=${VERSION}
+
+test: assets gem
+	@bundle exec rake test
+	@echo "Tests completed successfully."
+
+vars:
+	@echo "NAME=${NAME}"
+	@echo "OWNER=${OWNER}"
+	@echo "VERSION=${VERSION}"
+	@echo "GEM=${GEM}"
+	@echo "GPR=${GPR}"
+	@echo "SPEC=${SPEC}"
