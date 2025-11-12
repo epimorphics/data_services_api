@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
     'changelog_uri' => 'https://github.com/epimorphics/data_services_api/blob/main/CHANGELOG.md',
     'documentation_uri' => 'https://www.rubydoc.info/gems/data_services_api',
     'homepage_uri' => spec.homepage,
-    'rubygems_mfa_required' => 'true',
+    'rubygems_mfa_required' => 'true'
   }
 
   spec.add_dependency 'faraday', '~> 2.13', '>= 2.13.0'
