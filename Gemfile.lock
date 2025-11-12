@@ -3,9 +3,9 @@ PATH
   specs:
     data_services_api (1.6.0)
       faraday (~> 2.13)
-      faraday-encoding (~> 0.0.6)
-      faraday-follow_redirects (~> 0.3.0)
-      faraday-retry (~> 2.0)
+      faraday-encoding (>= 0.0.6)
+      faraday-follow_redirects (>= 0.3.0)
+      faraday-retry (>= 2.0)
       json (~> 2.0)
       yajl-ruby (~> 1.4)
 
