@@ -169,10 +169,12 @@ module DataServicesApi
         # instrument the request to log the time it takes to complete but only if we're in a Rails environment
         config.request :instrumentation, name: 'requests.api' if in_rails?
         config.request :retry, retry_options
-        with_logger_in_rails(config)
 
         config.response :json
+        # ! Since responses are processed by the middleware stack in reverse order
         config.response :raise_error
+        # ! Passing the logger in last ensures that errors are logged before the exception is raised.
+        with_logger_in_rails(config)
       end
     end
 

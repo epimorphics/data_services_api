@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in data-api.gemspec
+# Specify the gem's runtime dependencies in data_services_api.gemspec
 gemspec
 
 gem 'byebug', group: %i[development test], require: false
