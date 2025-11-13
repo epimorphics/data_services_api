@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Overhauled Makefile with comprehensive build automation
 - Upgraded Bundler version for improved dependency management
 - Refined file packaging configuration for better gem distribution
+- Refined logger configuration for improved debugging:
+  - Disabled logging of headers in HTTP responses
+  - Turned off logging of errors in HTTP responses
+  - Set log level to debug consistently across all environments
+  - Removed production/debug environment-based log level logic
 
 ### Fixed
 
