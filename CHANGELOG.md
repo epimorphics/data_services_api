@@ -1,14 +1,52 @@
-# Changelog for DS API rubygem
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 1.6.1 - 2025-11
+
+### Security
+
+- Updated dependency versions to address security vulnerabilities:
+  - Faraday HTTP client updated to 2.14.0 with related middleware
+  - WebMock, Mocha, and Excon libraries updated to latest secure versions
+  - Development and linting tools updated to compatible versions
+
+  [#27](https://github.com/epimorphics/data_services_api/issues/27)
+
+### Added
+
+- New Make targets for linting, cleaning, asset management, and variable inspection
+- Comprehensive help documentation in Makefile
+
+### Changed
+
+- Improved gemspec with enhanced metadata and dependency constraints
+- Overhauled Makefile with comprehensive build automation
+- Upgraded Bundler version for improved dependency management
+- Refined file packaging configuration for better gem distribution
+
+### Fixed
+
+- Corrected middleware stack ordering in HTTP client to ensure proper error handling
+- Updated gem homepage URL and project references for accuracy
 
 ## 1.6.0 - 2025-07
 
-- Update TargetRubyVersion to 3.4 for compatibility
-- Refresh dependencies for better stability
-- Refactor logging and error handling for clarity
-- Enhance JSON parsing reliability
-- Revise VCR setups with new HTTP client
-- Expand .gitignore to cover more files
-- Include Gemfile.lock for consistent dependencies
+### Changed
+
+- Updated TargetRubyVersion to 3.4 for compatibility
+- Refreshed dependencies for better stability
+- Refactored logging and error handling for clarity
+- Enhanced JSON parsing reliability
+- Revised VCR setups with new HTTP client
+- Expanded .gitignore to cover more files
+- Included Gemfile.lock for consistent dependencies
+
+---
+<!-- Versions below this point use legacy changelog format -->
 
 ## 1.5.4 - 2025-04
 
