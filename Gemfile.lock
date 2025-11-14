@@ -54,8 +54,8 @@ GEM
     mocha (2.8.0)
       ruby2_keywords (>= 0.0.5)
     mutex_m (0.3.0)
-    net-http (0.7.0)
-      uri
+    net-http (0.8.0)
+      uri (>= 0.11.1)
     ostruct (0.6.3)
     parallel (1.27.0)
     parser (3.3.10.0)
