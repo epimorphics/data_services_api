@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README documentation:
   - Switched build and test instructions from rake to make commands
   - Fixed typo in notifications reference for Prometheus monitoring section
+- Updated additional dependencies:
+  - Upgraded net-http to version 0.8.0 for improved compatibility
+  - Bumped faraday-follow_redirects to require newer minor version
 
 ### Fixed
 
