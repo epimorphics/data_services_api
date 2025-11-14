@@ -129,7 +129,7 @@ At present, publishing is a manual step for Gem maintainers. The process is:
 ### Prometheus monitoring
 
 This gem integrates with Prometheus monitoring by emitting the following
-`ActiveSupport::Notificaion`s:
+`ActiveSupport::Notification`s:
 
 - `response.api` - API response, including status code and duration
 - `connection_failure.api` - failure to connect to the API, with exception
