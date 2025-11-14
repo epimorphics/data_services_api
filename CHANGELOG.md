@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Turned off logging of errors in HTTP responses
   - Set log level to debug consistently across all environments
   - Removed production/debug environment-based log level logic
+- Updated README documentation:
+  - Switched build and test instructions from rake to make commands
+  - Fixed typo in notifications reference for Prometheus monitoring section
 
 ### Fixed
 
