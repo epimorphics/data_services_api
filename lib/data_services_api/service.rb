@@ -280,13 +280,11 @@ module DataServicesApi
     def with_logger_in_rails(config)
       return config.response :logger unless in_rails?
 
-      level = Rails.env.production? ? :info : :debug
-
       config.response :logger, Rails.logger, {
-        headers: true,
+        headers: false,
         bodies: false,
-        errors: true,
-        log_level: level.to_sym
+        errors: false,
+        log_level: :debug
       }
     end
 

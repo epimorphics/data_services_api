@@ -27,6 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Overhauled Makefile with comprehensive build automation
 - Upgraded Bundler version for improved dependency management
 - Refined file packaging configuration for better gem distribution
+- Refined logger configuration for improved debugging:
+  - Disabled logging of headers in HTTP responses
+  - Turned off logging of errors in HTTP responses
+  - Set log level to debug consistently across all environments
+  - Removed production/debug environment-based log level logic
+- Updated README documentation:
+  - Switched build and test instructions from rake to make commands
+  - Fixed typo in notifications reference for Prometheus monitoring section
+- Updated additional dependencies:
+  - Upgraded net-http to version 0.8.0 for improved compatibility
+  - Bumped faraday-follow_redirects to require newer minor version
 
 ### Fixed
 

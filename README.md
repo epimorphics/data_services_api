@@ -63,7 +63,7 @@ order for the gem to work._
 Rubocop should not report any warnings:
 
 ```sh
-$ rubocop
+$ make lint
 Inspecting 21 files
 .....................
 
@@ -81,14 +81,14 @@ Once the API is started you can invoke the tests with the simple command
 below[^1]:
 
 ```sh
-rake test
+make test
 ```
 
 You can also set the environment variable `API_URL` to point to a running
 instance of the HMLR Data API from a non-default port:
 
 ```sh
-API_URL=http://localhost:8080 rake test
+API_URL=http://localhost:8080 make test
 ```
 
 _N.B If `API_URL` environment variable is not set it will default to
@@ -129,7 +129,7 @@ At present, publishing is a manual step for Gem maintainers. The process is:
 ### Prometheus monitoring
 
 This gem integrates with Prometheus monitoring by emitting the following
-`ActiveSupport::Notificaion`s:
+`ActiveSupport::Notification`s:
 
 - `response.api` - API response, including status code and duration
 - `connection_failure.api` - failure to connect to the API, with exception
