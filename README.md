@@ -70,6 +70,10 @@ Inspecting 21 files
 21 files inspected, no offenses detected
 ```
 
+`make lint` runs Rubocop with safe auto-correction (`-a`) for local developer
+convenience. The CI workflow runs Rubocop without auto-correction and will fail
+when offences are detected.
+
 ### Tests
 
 You will need to have started the [HMLR Data
