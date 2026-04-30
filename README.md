@@ -56,92 +56,12 @@ order for the gem to work._
 
 ---
 
-## Developer notes
+## Contributing
 
-### Linting
-
-Rubocop should not report any warnings:
-
-```sh
-$ make lint
-Inspecting 21 files
-.....................
-
-21 files inspected, no offenses detected
-```
-
-`make lint` runs Rubocop with safe auto-correction (`-a`) for local developer
-convenience. The CI workflow runs Rubocop without auto-correction and will fail
-when offences are detected.
-
-### Makefile targets
-
-The Makefile separates verification, packaging, and publishing so each stage can
-be run independently and composed safely.
-
-- `make checks` runs linting and tests
-- `make gem` builds the gem artefact only
-- `make build` runs `clean`, then `checks`, then `gem`
-- `make publish` pushes an existing gem artefact to the package registry
-
-This keeps release automation predictable. CI enforces quality gates before
-publish, whilst local workflows can run verification and packaging together or
-independently.
-
-### Tests
-
-You will need to have started the [HMLR Data API](https://github.com/epimorphics/lr-data-api)
-locally. To do so follow the instructions in the repository's [README](https://github.com/epimorphics/lr-data-api#run)
-
-Once the API is started you can invoke the tests with the simple command
-below[^1]:
-
-```sh
-make test
-```
-
-You can also set the environment variable `API_SERVICE_URL` to point to a
-running instance of the HMLR Data API from a non-default port:
-
-```sh
-API_SERVICE_URL=http://localhost:8080 make test
-```
-
-> [!NOTE]
-> If `API_SERVICE_URL` environment variable is not set it will default
-> to `http://localhost:8888`
+For setup instructions, available `make` targets, running tests, linting, and
+publishing releases, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
-
-### Publishing the gem to the Epimorphics GitHub Package Registry
-
-This gem is now published to the Epimorphics section of the GitHub Package
-Registry (GPR). Previously we linked directly to the GitHub repo in the
-`Gemfile`s of applications consuming this library, but this practice is now
-anti-preferred.
-
-Note that in order to publish to the Epimorphics section of the GPR, you'll need
-a GitHub personal access token (PAT). There are [instructions on the Epimorphics wiki](https://github.com/epimorphics/internal/wiki/Ansible-CICD#creating-a-pat-for-gpr-access)
-for creating a new PAT if you don't have one. Once created, you can use the same
-PAT in multiple projects, you don't need to create a new one each time.
-
-At present, publishing is a manual step for Gem maintainers. The process is:
-
-1. Make the required code changes, and have them reviewed by other members of
-   the team
-2. Update `CHANGELOG.md` with the changes.
-3. Update the `lib/data_services_api/version.rb` following semantic version principles
-4. Run `make build` to clean, verify, and package the gem locally
-   - This will run linting and tests before building the `.gem` artefact
-   - The local gem is ignored by `.gitignore` and is not included in recorded
-     code changes in the repository
-5. Push the code changes to the `main` branch via a pull request
-6. On PR merge, create a new release in GitHub by triggering the `Publish`
-   GitHub Action workflow manually. See the [workflows
-   README](.github/workflows/README.md) for full details on how the CI pipeline
-   is structured and how to trigger a release.
-7. Check on the [GitHub Package Registry](https://github.com/orgs/epimorphics/packages?repo_name=data_services_api)
-   to see that the new gem has been published.
 
 ### Prometheus monitoring
 
@@ -152,6 +72,3 @@ This gem integrates with Prometheus monitoring by emitting the following
 - `connection_failure.api` - failure to connect to the API, with exception
   detail
 - `service_exception.api` - failure to process the API response
-
-[^1]: You may need to preface the `rake test` command with `bundle exec` if you
-      are using a Ruby version manager such as `rbenv` or `rvm`.
