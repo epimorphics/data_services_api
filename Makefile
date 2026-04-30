@@ -1,14 +1,17 @@
-.PHONY: auth clean gem publish test
+.PHONY: all auth build bundles check checks clean coverage docs forceclean gem help lint publish realclean rubocop tag tags test updates vars version
 
-NAME?=data_services_api
+GEM_NAME?=data_services_api
 OWNER?=epimorphics
-VERSION?=$(shell ruby -e 'require "./lib/${NAME}/version" ; puts DataServicesApi::VERSION')
+COMMIT=$(shell git rev-parse --short HEAD)
+VERSION?=$(shell /usr/bin/env ruby -e 'require "./lib/${GEM_NAME}/version" ; puts DataServicesApi::VERSION')
+TAG?=${VERSION}-${COMMIT}
 PAT?=$(shell read -p 'Github access token:' TOKEN; echo $$TOKEN)
+BUNDLE?=bundle
 
 AUTH=${HOME}/.gem/credentials
-GEM=${NAME}-${VERSION}.gem
+GEM=${GEM_NAME}-${VERSION}.gem
 GPR=https://rubygems.pkg.github.com/${OWNER}
-SPEC=${NAME}.gemspec
+SPEC=${GEM_NAME}.gemspec
 
 ${AUTH}:
 	@mkdir -p ${HOME}/.gem
@@ -16,86 +19,91 @@ ${AUTH}:
 	@echo ':github: Bearer ${PAT}' >> ${AUTH}
 	@chmod 0600 ${AUTH}
 
-${GEM}: ${SPEC} ./lib/${NAME}/version.rb
+# Build the gem package
+${GEM}: ${SPEC} ./lib/${GEM_NAME}/version.rb
 	gem build ${SPEC}
 
-all: publish
+all: check ## Default target: run all checks
 
 assets:
-	@echo "Installing assets for ${NAME} gem..."
+	@echo "Installing assets for ${GEM_NAME} gem..."
 	@bundle install
-	@echo "Assets for ${NAME} gem are up to date."
+	@echo "Assets for ${GEM_NAME} gem are up to date."
 
-auth: ${AUTH}
+auth: ${AUTH} ## Set up authentication for GitHub and Bundler
+	@echo "Authentication set up for GitHub and Bundler."
 
-build: clean gem
+build: clean checks gem ## Verify and build the gem
+	@echo "Build and verification complete."
 
-checks: lint test
+check: checks ## Alias for checks target
 
-clean:
-	@echo "Cleaning up ${NAME} gem..."
+checks: lint test ## Run all checks: linting and tests
+	@echo "All checks passed."
+
+clean: ## Remove generated files
+	@echo "Cleaning up..."
 	@bundle exec rake clean clobber
-	@rm -rf ${GEM}
+	@rm -rf coverage doc *.gem
 
-gem: ${GEM}
+coverage: ## Display test coverage report
+	@open coverage/index.html
+	@echo "Displaying test coverage report in browser..."
+
+forceclean: realclean ## Remove all bundled files and reset Bundler
+	@${BUNDLE} clean --force || :
+
+gem: ${GEM} ## Build the gem package
 	@echo ${GEM}
 
-help:
-	@echo "Make targets:"
-	@echo "  all - build the Docker image (default)"
-	@echo "  assets - install gems and yarn packages, compile assets"
-	@echo "  auth - compile the required package registry authorisations"
-	@echo "  build - build the gem package"
-	@echo "  checks - run all linting and tests as a single task"
-	@echo "  clean - remove temporary files"
-	@echo "  gem - show the gem file name"
-	@echo "  help - show this help message"
-	@echo "  lint - run linters"
-	@echo "  publish - release the image to the Docker registry"
-	@echo "  realclean - remove all authentication tokens"
-	@echo "  tags - show the current name, owner and version tags"
-	@echo "  test - runs the test suite, be it units or integration"
-	@echo "  vars - show the current variable settings"
-	@echo "  version - show the current version"
+help: ## Display this message
+	@echo "Available make targets:"
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-20s %s\n", $$1, $$2}'
 	@echo ""
-	@echo "Environment variables (optional: all variables have defaults):"
-	@echo "  GEM - package name of the gem file (default: ${NAME}-${VERSION}.gem)"
-	@echo "  GPR - GitHub package registry for gem (default: from git config)"
-	@echo "  NAME - name of the Gem (default: from deployment.yaml)"
-	@echo "  PAT - GitHub personal access token (default: prompt)"
-	@echo "  SPEC - gemspec file to use (default: ${NAME}.gemspec)"
-	@echo "  VERSION - version of the application (default: from VERSION file)"
+	@make vars
 
-lint:
-	@echo "Running code linting for ${NAME} ..."
-# Auto-correct offenses safely where possible with the `-a` flag
-	@bundle exec rubocop -a
-	@echo "Linting checks completed."
+lint: rubocop ## Run linting checks
+	@echo "Linting complete."
 
-publish: ${AUTH} ${GEM}
-	@echo Publishing package ${NAME}:${VERSION} to ${OWNER} ...
-	@gem push --key github --host ${GPR} ${GEM}
-	@echo Done.
+publish: ${AUTH} ${GEM} ## Publish the gem to the GitHub Package Registry
+	@echo "Publishing ${GEM} to GitHub Package Registry..."
+	@gem push --key github \
+		--host ${GPR} ${GEM}
+	@echo "Done."
 
-realclean: clean
-	@rm -rf ${AUTH}
+realclean: clean ## Remove all generated files and authentication
+	@echo "Removing authentication..."
+	@rm -f ${AUTH}
 
-tags:
-	@echo name=${NAME}
+rubocop: ## Run RuboCop linting
+	@echo "Running RuboCop linting..."
+	@${BUNDLE} exec rubocop -a
+
+tag: ## Display the current gem tag
+	@echo ${TAG}
+
+tags: ## Display version information for CI pipeline
+	@echo name=${GEM_NAME}
 	@echo owner=${OWNER}
 	@echo version=${VERSION}
 
-test: assets gem
-	@bundle exec rake test
-	@echo "Tests completed successfully."
+test: assets ## Run the test suite
+	@echo "Running tests..."
+	@${BUNDLE} exec rake test
 
-vars:
-	@echo "GEM=${GEM}"
-	@echo "GPR=${GPR}"
-	@echo "NAME=${NAME}"
-	@echo "OWNER=${OWNER}"
-	@echo "SPEC=${SPEC}"
-	@echo "VERSION=${VERSION}"
+updates: ## Check for outdated Ruby gems with Bundler
+	@echo "Running bundle outdated to check Ruby gems..."
+	@${BUNDLE} outdated --only-explicit || true
 
-version:
+vars: ## Display current variable values
+	@echo "COMMIT          = ${COMMIT}"
+	@echo "GEM             = ${GEM}"
+	@echo "GEM_NAME        = ${GEM_NAME}"
+	@echo "GPR             = ${GPR}"
+	@echo "OWNER           = ${OWNER}"
+	@echo "SPEC            = ${SPEC}"
+	@echo "TAG             = ${TAG}"
+	@echo "VERSION         = ${VERSION}"
+
+version: ## Display the gem version
 	@echo ${VERSION}
