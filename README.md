@@ -119,10 +119,12 @@ At present, publishing is a manual step for Gem maintainers. The process is:
    - This will run the tests and build the gem locally; however, the local gem
      will be ignored by the `.gitignore` file and not included in the recorded
      code changes in the repository.
-4. Push the changes to the `main` branch via a pull request
-5. On PR merge, create a new release in GitHub by triggering the `Publish`
-   GitHub Action workflow manually.
-6. Check on the [GitHub Package
+4. Run `make checks` to confirm linting and tests pass before pushing
+5. Push the changes to the `main` branch via a pull request
+6. On PR merge, create a new release in GitHub by triggering the `Publish`
+   GitHub Action workflow manually. See the [workflows README](.github/workflows/README.md)
+   for full details on how the CI pipeline is structured and how to trigger a release.
+7. Check on the [GitHub Package
    Registry](https://github.com/orgs/epimorphics/packages?repo_name=data_services_api)
    to see that the new gem has been published.
 
