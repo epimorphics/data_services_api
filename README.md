@@ -56,6 +56,34 @@ order for the gem to work._
 
 ---
 
+## Incident triage: is this gem a likely cause of any alarms?
+
+This gem is a shim layer. It translates DsAPI query expressions into Sapi-NT
+requests and normalises the returned JSON. It has no data store and no logic of
+its own beyond that translation.
+
+Likely:
+
+- Queries that previously returned results now return errors or empty responses
+  and a Sapi-NT change is suspected
+- Response field mapping or JSON structure changed unexpectedly after a gem
+  version update
+
+Less likely:
+
+- Upstream Sapi-NT service is unavailable or returning 5xx responses
+- Network connectivity between the consuming application and the API endpoint
+  is degraded
+- Data pipeline issues upstream of Sapi-NT
+
+> [!NOTE]
+> The test suite uses VCR cassettes to mock upstream responses. A passing test
+> run confirms the shim logic is intact but does **not** confirm the upstream
+> service is healthy. To verify Sapi-NT directly, check `API_SERVICE_URL` in the
+> consuming application's environment and issue a request against it independently.
+
+---
+
 ## Contributing
 
 For setup instructions, available `make` targets, running tests, linting, and
