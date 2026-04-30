@@ -36,6 +36,8 @@ GEM
       net-http (~> 0.5)
     faraday-retry (2.3.2)
       faraday (~> 2.0)
+    foreman (0.90.0)
+      thor (~> 1.4)
     hashdiff (1.2.1)
     json (2.16.0)
     json_expressions (0.9.0)
@@ -90,6 +92,7 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
+    thor (1.5.0)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.1.0)
@@ -111,6 +114,12 @@ DEPENDENCIES
   byebug
   data_services_api!
   excon
+  faraday (~> 2.13, >= 2.13.0)
+  faraday-encoding (~> 0.0, >= 0.0.6)
+  faraday-follow_redirects (~> 0.4, >= 0.4.0)
+  faraday-retry (~> 2.0, >= 2.0)
+  foreman
+  json (~> 2.0)
   json_expressions
   minitest
   minitest-rg
@@ -122,6 +131,7 @@ DEPENDENCIES
   rubocop
   simplecov
   webmock
+  yajl-ruby (~> 1.4)
 
 BUNDLED WITH
    2.7.2
