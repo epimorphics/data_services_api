@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Adopted shared reusable workflow for gem publishing via GitHub Actions
+- Added Rubocop compliance as a required gate before publishing
+- Extended unit test and Rubocop workflows with manual dispatch and reusable
+  call support
+- Scoped push and pull request triggers to the main branch to prevent duplicate
+  CI runs
+- Standardised build flow to orchestrate verification, packaging, and cleaning
+  as a single step
+- Documented Makefile target intent and the separation of verification,
+  packaging, and publishing
+- Added GitHub Actions workflows README covering trigger behaviour and the
+  release process
+- Updated gem publishing instructions to reflect the current Makefile and CI
+  pipeline
+- Updated dev and maintenance dependencies to latest versions
+
 ## 1.6.1 - 2025-11
 
 ### Security
