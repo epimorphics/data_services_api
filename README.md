@@ -158,33 +158,30 @@ _N.B If `API_URL` environment variable is not set it will default to
 
 ### Publishing the gem to the Epimorphics GitHub Package Registry
 
-This gem is now published to the Epimorphics section of the GitHub Package
+This gem is published to the Epimorphics section of the GitHub Package
 Registry (GPR). Previously we linked directly to the GitHub repo in the
 `Gemfile`s of applications consuming this library, but this practice is now
 anti-preferred.
 
-Note that in order to publish to the Epimorphics section of the GPR, you'll need
-a GitHub personal access token (PAT). There are [instructions on the Epimorphics
-wiki](https://github.com/epimorphics/internal/wiki/Ansible-CICD#creating-a-pat-for-gpr-access)
-for creating a new PAT if you don't have one. Once created, you can use the same
-PAT in multiple projects, you don't need to create a new one each time.
-
-At present, publishing is a manual step for Gem maintainers. The process is:
+The process is:
 
 1. Make the required code changes, and have them reviewed by other members of
    the team
-2. Update `CHANGELOG.md` with the changes. Update
+2. Bump `DataServicesApi::VERSION` in
    `lib/data_services_api/version.rb` following semantic version principles
-3. Check that the gem builds correctly by running `gem build
+3. Update `CHANGELOG.md` with the changes
+4. Check that the gem builds correctly by running `gem build
    data_services_api.gemspec`
    - The local gem file will be ignored by the `.gitignore` file and not
      included in the recorded code changes in the repository.
-4. Push the changes to the `main` branch via a pull request
-5. On PR merge, create a new release in GitHub by triggering the `Publish`
-   GitHub Action workflow manually.
-6. Check on the [GitHub Package
-   Registry](https://github.com/orgs/epimorphics/packages?repo_name=data_services_api)
-   to see that the new gem has been published.
+5. Push the changes to the `main` branch via a pull request
+6. On PR merge, create a GitHub Release (via the UI or `gh release create
+   X.Y.Z --repo epimorphics/data_services_api`)
+
+Publishing the GitHub Release triggers the release workflow, which builds the
+gem and publishes it to the [Epimorphics GitHub Package
+Registry](https://github.com/orgs/epimorphics/packages) automatically — no
+local credentials required.
 
 ### Prometheus monitoring
 
