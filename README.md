@@ -123,7 +123,7 @@ all optional except `url`:
 Rubocop should not report any warnings:
 
 ```sh
-$ make lint
+$ bundle exec rubocop
 Inspecting 21 files
 .....................
 
@@ -175,10 +175,10 @@ At present, publishing is a manual step for Gem maintainers. The process is:
    the team
 2. Update `CHANGELOG.md` with the changes. Update
    `lib/data_services_api/version.rb` following semantic version principles
-3. Check that the gem builds correctly via the `make gem` target
-   - This will run the tests and build the gem locally; however, the local gem
-     will be ignored by the `.gitignore` file and not included in the recorded
-     code changes in the repository.
+3. Check that the gem builds correctly by running `gem build
+   data_services_api.gemspec`
+   - The local gem file will be ignored by the `.gitignore` file and not
+     included in the recorded code changes in the repository.
 4. Push the changes to the `main` branch via a pull request
 5. On PR merge, create a new release in GitHub by triggering the `Publish`
    GitHub Action workflow manually.
