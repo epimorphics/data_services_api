@@ -42,6 +42,8 @@ different in future.
 
 ## Usage
 
+This gem requires Ruby >= 3.4.
+
 To add this gem as a dependency to another Ruby project, add this line to your
 application's Gemfile:
 
