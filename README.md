@@ -7,6 +7,18 @@ cube](https://www.w3.org/TR/vocab-data-cube/), in which a collection of data
 readings, known as _measures_ are organised into a hyper-cube of two or more
 _dimensions_.
 
+## Contents
+
+- [History](#history)
+- [Usage](#usage)
+  - [Quick start](#quick-start)
+  - [`Service` configuration options](#service-configuration-options)
+- [Developer notes](#developer-notes)
+  - [Linting](#linting)
+  - [Tests](#tests)
+  - [Publishing the gem to the Epimorphics GitHub Package Registry](#publishing-the-gem-to-the-epimorphics-github-package-registry)
+  - [Prometheus monitoring](#prometheus-monitoring)
+
 ## History
 
 Originally, the expression language used by this gem was interpreted directly by
@@ -42,6 +54,8 @@ different in future.
 
 ## Usage
 
+This gem requires Ruby >= 3.4.
+
 To add this gem as a dependency to another Ruby project, add this line to your
 application's Gemfile:
 
@@ -54,6 +68,52 @@ end
 _N.B. An API URL needs to be provided by that project for the `Service` class in
 order for the gem to work._
 
+### Quick start
+
+```ruby
+require 'data_services_api'
+
+service = DataServicesApi::Service.new(url: 'https://example.landregistry.gov.uk')
+dataset = service.dataset('ukhpi')
+
+# A query is any object that responds to `terms` (a Hash of DsAPI expression
+# terms) and `to_json`
+query = Class.new do
+  def terms
+    { '@and' => [
+      { 'ukhpi:refMonth' => { '@ge' => { :@value => '2019-01', :@type => 'http://www.w3.org/2001/XMLSchema#gYearMonth' } } },
+      { 'ukhpi:refRegion' => { '@eq' => { :@id => 'http://landregistry.data.gov.uk/id/region/united-kingdom' } } }
+    ], '@sort' => [
+      { '@down' => 'ukhpi:refMonth' }
+    ], '@limit' => 1 }
+  end
+
+  def to_json(*_args)
+    terms.to_json
+  end
+end.new
+
+result = dataset.query(query)
+```
+
+`dataset.query` translates the DsAPI-style expression into a Sapi-NT URL,
+executes it against the configured API, and returns the result re-shaped back
+into the legacy DsAPI JSON format.
+
+### `Service` configuration options
+
+`DataServicesApi::Service.new` accepts a config hash with the following keys,
+all optional except `url`:
+
+- `url` - the base URL of the Sapi-NT API to query against
+- `instrumenter` - an object responding to `instrument(name, payload)`, used
+  to emit the `response.api`, `connection_failure.api` and
+  `service_exception.api` notifications described below. Defaults to
+  `ActiveSupport::Notifications` when running under Rails, otherwise `nil`
+- `logger` - an object responding to the standard `Logger` levels
+  (`info`, `warn`, `error`, `debug`), used to log request/response details.
+  Defaults to `Rails.logger` when running under Rails, otherwise `nil`
+
 ---
 
 ## Developer notes
@@ -63,7 +123,7 @@ order for the gem to work._
 Rubocop should not report any warnings:
 
 ```sh
-$ make lint
+$ bundle exec rubocop
 Inspecting 21 files
 .....................
 
@@ -78,17 +138,17 @@ instructions in the repository's
 [README](https://github.com/epimorphics/lr-data-api#run)
 
 Once the API is started you can invoke the tests with the simple command
-below[^1]:
+below:
 
 ```sh
-make test
+bundle exec rake test
 ```
 
 You can also set the environment variable `API_URL` to point to a running
 instance of the HMLR Data API from a non-default port:
 
 ```sh
-API_URL=http://localhost:8080 make test
+API_URL=http://localhost:8080 bundle exec rake test
 ```
 
 _N.B If `API_URL` environment variable is not set it will default to
@@ -115,10 +175,10 @@ At present, publishing is a manual step for Gem maintainers. The process is:
    the team
 2. Update `CHANGELOG.md` with the changes. Update
    `lib/data_services_api/version.rb` following semantic version principles
-3. Check that the gem builds correctly via the `make gem` target
-   - This will run the tests and build the gem locally; however, the local gem
-     will be ignored by the `.gitignore` file and not included in the recorded
-     code changes in the repository.
+3. Check that the gem builds correctly by running `gem build
+   data_services_api.gemspec`
+   - The local gem file will be ignored by the `.gitignore` file and not
+     included in the recorded code changes in the repository.
 4. Push the changes to the `main` branch via a pull request
 5. On PR merge, create a new release in GitHub by triggering the `Publish`
    GitHub Action workflow manually.
@@ -135,6 +195,3 @@ This gem integrates with Prometheus monitoring by emitting the following
 - `connection_failure.api` - failure to connect to the API, with exception
   detail
 - `service_exception.api` - failure to process the API response
-
-[^1]: You may need to preface the `rake test` command with `bundle exec` if you
-      are using a Ruby version manager such as `rbenv` or `rvm`.
