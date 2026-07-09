@@ -86,6 +86,20 @@ result = dataset.query(query)
 executes it against the configured API, and returns the result re-shaped back
 into the legacy DsAPI JSON format.
 
+### `Service` configuration options
+
+`DataServicesApi::Service.new` accepts a config hash with the following keys,
+all optional except `url`:
+
+- `url` - the base URL of the Sapi-NT API to query against
+- `instrumenter` - an object responding to `instrument(name, payload)`, used
+  to emit the `response.api`, `connection_failure.api` and
+  `service_exception.api` notifications described below. Defaults to
+  `ActiveSupport::Notifications` when running under Rails, otherwise `nil`
+- `logger` - an object responding to the standard `Logger` levels
+  (`info`, `warn`, `error`, `debug`), used to log request/response details.
+  Defaults to `Rails.logger` when running under Rails, otherwise `nil`
+
 ---
 
 ## Developer notes
