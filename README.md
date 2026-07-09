@@ -7,6 +7,18 @@ cube](https://www.w3.org/TR/vocab-data-cube/), in which a collection of data
 readings, known as _measures_ are organised into a hyper-cube of two or more
 _dimensions_.
 
+## Contents
+
+- [History](#history)
+- [Usage](#usage)
+  - [Quick start](#quick-start)
+  - [`Service` configuration options](#service-configuration-options)
+- [Developer notes](#developer-notes)
+  - [Linting](#linting)
+  - [Tests](#tests)
+  - [Publishing the gem to the Epimorphics GitHub Package Registry](#publishing-the-gem-to-the-epimorphics-github-package-registry)
+  - [Prometheus monitoring](#prometheus-monitoring)
+
 ## History
 
 Originally, the expression language used by this gem was interpreted directly by
@@ -126,17 +138,17 @@ instructions in the repository's
 [README](https://github.com/epimorphics/lr-data-api#run)
 
 Once the API is started you can invoke the tests with the simple command
-below[^1]:
+below:
 
 ```sh
-make test
+bundle exec rake test
 ```
 
 You can also set the environment variable `API_URL` to point to a running
 instance of the HMLR Data API from a non-default port:
 
 ```sh
-API_URL=http://localhost:8080 make test
+API_URL=http://localhost:8080 bundle exec rake test
 ```
 
 _N.B If `API_URL` environment variable is not set it will default to
@@ -183,6 +195,3 @@ This gem integrates with Prometheus monitoring by emitting the following
 - `connection_failure.api` - failure to connect to the API, with exception
   detail
 - `service_exception.api` - failure to process the API response
-
-[^1]: You may need to preface the `rake test` command with `bundle exec` if you
-      are using a Ruby version manager such as `rbenv` or `rvm`.
