@@ -54,6 +54,38 @@ end
 _N.B. An API URL needs to be provided by that project for the `Service` class in
 order for the gem to work._
 
+### Quick start
+
+```ruby
+require 'data_services_api'
+
+service = DataServicesApi::Service.new(url: 'https://example.landregistry.gov.uk')
+dataset = service.dataset('ukhpi')
+
+# A query is any object that responds to `terms` (a Hash of DsAPI expression
+# terms) and `to_json`
+query = Class.new do
+  def terms
+    { '@and' => [
+      { 'ukhpi:refMonth' => { '@ge' => { :@value => '2019-01', :@type => 'http://www.w3.org/2001/XMLSchema#gYearMonth' } } },
+      { 'ukhpi:refRegion' => { '@eq' => { :@id => 'http://landregistry.data.gov.uk/id/region/united-kingdom' } } }
+    ], '@sort' => [
+      { '@down' => 'ukhpi:refMonth' }
+    ], '@limit' => 1 }
+  end
+
+  def to_json(*_args)
+    terms.to_json
+  end
+end.new
+
+result = dataset.query(query)
+```
+
+`dataset.query` translates the DsAPI-style expression into a Sapi-NT URL,
+executes it against the configured API, and returns the result re-shaped back
+into the legacy DsAPI JSON format.
+
 ---
 
 ## Developer notes
