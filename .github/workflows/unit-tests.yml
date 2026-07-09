@@ -5,11 +5,16 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ["3.4", "4.0"]
     steps:
     - uses: actions/checkout@v3
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
 
     - name: Install dependencies (bundle)
       run: bundle install
