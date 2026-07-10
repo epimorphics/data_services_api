@@ -26,7 +26,7 @@ class MockLogger
   end
 end
 
-describe 'DataServicesAPI::Service', vcr: true do
+describe 'DataServicesAPI::Service' do
   let(:api_url) do
     ENV.fetch('API_SERVICE_URL', 'http://localhost:8888')
   end
