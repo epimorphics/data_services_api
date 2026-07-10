@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Lowered minimum supported Ruby version and removed the pinned `.ruby-version`
+  file in favor of explicit versions per CI workflow
+- Added a CI test matrix covering Ruby 3.4 and 4.0
+- Dropped the unmaintained `minitest-rg`, `minitest-vcr`, `minispec-metadata`,
+  and `json_expressions` gems in favor of `minitest` 6, direct use of `vcr`,
+  and plain JSON-normalized equality assertions
+- Added explicit `cgi` dependency, required by `vcr` since Ruby 4.0 split it
+  out of the standard library
+
 ## 1.6.1 - 2025-11
 
 ### Security
