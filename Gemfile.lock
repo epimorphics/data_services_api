@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    data_services_api (1.6.1)
+    data_services_api (1.7.0)
       faraday (~> 2.13, >= 2.13.0)
       faraday-encoding (~> 0.0, >= 0.0.6)
       faraday-follow_redirects (~> 0.4, >= 0.4.0)
