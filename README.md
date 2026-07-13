@@ -113,6 +113,20 @@ all optional except `url`:
 - `logger` - an object responding to the standard `Logger` levels
   (`info`, `warn`, `error`, `debug`), used to log request/response details.
   Defaults to `Rails.logger` when running under Rails, otherwise `nil`
+- `connection_failed_retry_options` - a hash of
+  [`faraday-retry`](https://github.com/lostisland/faraday-retry) options
+  (`max`, `interval`, `interval_randomness`, `backoff_factor`) applied to
+  `Faraday::ConnectionFailed` errors (e.g. a colocated service restarting).
+  Merged over the default of `max: 4, interval: 0.5, interval_randomness: 0.25,
+  backoff_factor: 2`
+- `timeout_retry_options` - same shape as above, applied to
+  `Faraday::TimeoutError` errors. Merged over the default of `max: 2,
+  interval: 0.25, interval_randomness: 0.5, backoff_factor: 2`. Kept more
+  conservative than the connection-failure retry budget since retrying an
+  overloaded upstream aggressively can make things worse
+
+`Faraday::ResourceNotFound` (404) responses are not retried, since a 404 is
+not a transient failure.
 
 ---
 

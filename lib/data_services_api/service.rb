@@ -1,15 +1,39 @@
 # frozen_string_literal: true
 
+require 'faraday'
+
 module DataServicesApi
   # Denotes the encapsulated DataServicesAPI service
   class Service # rubocop:disable Metrics/ClassLength
     attr_reader :instrumenter, :logger, :parser, :url
+
+    DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS = {
+      max: 4,
+      interval: 0.5,
+      interval_randomness: 0.25,
+      backoff_factor: 2,
+      exceptions: [Faraday::ConnectionFailed]
+    }.freeze
+
+    DEFAULT_TIMEOUT_RETRY_OPTIONS = {
+      max: 2,
+      interval: 0.25,
+      interval_randomness: 0.5,
+      backoff_factor: 2,
+      exceptions: [Faraday::TimeoutError]
+    }.freeze
 
     def initialize(config = {})
       @instrumenter = config[:instrumenter] || (in_rails? && ActiveSupport::Notifications)
       @logger = config[:logger] || (in_rails? && Rails.logger)
       @parser = Yajl::Parser.new
       @url = config[:url]
+      @connection_failed_retry_options = DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS.merge(
+        config[:connection_failed_retry_options] || {}
+      )
+      @timeout_retry_options = DEFAULT_TIMEOUT_RETRY_OPTIONS.merge(
+        config[:timeout_retry_options] || {}
+      )
     end
 
     def datasets
@@ -153,14 +177,6 @@ module DataServicesApi
     end
 
     def create_http_connection(http_url, auth = false) # rubocop:disable Metrics/MethodLength
-      retry_options = {
-        max: 2,
-        interval: 0.05,
-        interval_randomness: 0.5,
-        backoff_factor: 2,
-        exceptions: [Faraday::TimeoutError, Faraday::ConnectionFailed, Faraday::ResourceNotFound]
-      }
-
       Faraday.new(url: http_url) do |config|
         config.use Faraday::Request::UrlEncoded
         config.use Faraday::FollowRedirects::Middleware
@@ -168,7 +184,11 @@ module DataServicesApi
         config.request :authorization, :basic, api_user, api_pw if auth
         # instrument the request to log the time it takes to complete but only if we're in a Rails environment
         config.request :instrumentation, name: 'requests.api' if in_rails?
-        config.request :retry, retry_options
+        # Faraday::ResourceNotFound (404) is not transient and is deliberately not retried.
+        # Inner middleware exhausts its own budget before the exception reaches the next layer,
+        # so stack the more conservative timeout retry inside the more generous connection retry.
+        config.request :retry, @connection_failed_retry_options
+        config.request :retry, @timeout_retry_options
 
         config.response :json
         # ! Since responses are processed by the middleware stack in reverse order
