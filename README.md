@@ -186,6 +186,10 @@ The process is:
      `lib/data_services_api/version.rb` following semantic version principles
    - Update `CHANGELOG.md`, moving the `Unreleased` section's contents under a
      new heading for the version being released
+   - Run `bundle lock --local` (or `bundle install`) to regenerate
+     `Gemfile.lock` with the new version and commit the result — the release
+     workflow runs `bundle install` in frozen/deployment mode, which fails if
+     the lockfile still references the previous gem version
 3. Check that the gem builds correctly by running `gem build
    data_services_api.gemspec`
    - The local gem file will be ignored by the `.gitignore` file and not
