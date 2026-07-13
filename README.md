@@ -167,15 +167,17 @@ The process is:
 
 1. Make the required code changes, and have them reviewed by other members of
    the team
-2. Bump `DataServicesApi::VERSION` in
-   `lib/data_services_api/version.rb` following semantic version principles
-3. Update `CHANGELOG.md` with the changes
-4. Check that the gem builds correctly by running `gem build
+2. Before creating a release, you **must**:
+   - Bump `DataServicesApi::VERSION` in
+     `lib/data_services_api/version.rb` following semantic version principles
+   - Update `CHANGELOG.md`, moving the `Unreleased` section's contents under a
+     new heading for the version being released
+3. Check that the gem builds correctly by running `gem build
    data_services_api.gemspec`
    - The local gem file will be ignored by the `.gitignore` file and not
      included in the recorded code changes in the repository.
-5. Push the changes to the `main` branch via a pull request
-6. On PR merge, create a GitHub Release (via the UI or `gh release create
+4. Push the changes to the `main` branch via a pull request
+5. On PR merge, create a GitHub Release (via the UI or `gh release create
    X.Y.Z --repo epimorphics/data_services_api`)
 
 Publishing the GitHub Release triggers the release workflow, which builds the

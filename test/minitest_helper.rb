@@ -10,8 +10,6 @@ end
 require 'yajl'
 require 'minitest'
 require 'minitest/autorun'
-require 'minitest/rg'
-require 'json_expressions/minitest'
 
 require 'bundler'
 Bundler.require(:default, :development, :test)
