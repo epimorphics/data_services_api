@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Support configuring `Faraday::ConnectionFailed` and `Faraday::TimeoutError`
+  retry behaviour independently via `Service.new(connection_failed_retry_options:,
+  timeout_retry_options:)`, defaulting connection failures to a more generous
+  retry budget than timeouts
+
 ### Changed
+
+- `Faraday::ResourceNotFound` (404) is no longer retried, since a 404 is not a
+  transient failure and retrying it only adds latency
 
 - Lowered minimum supported Ruby version and removed the pinned `.ruby-version`
   file in favor of explicit versions per CI workflow
