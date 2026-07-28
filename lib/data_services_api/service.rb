@@ -55,9 +55,12 @@ module DataServicesApi
     def dataset(name)
       raise 'Dataset name is required' unless name
 
+      data_api = "#{@url}/landregistry/id/#{name}"
       endpoint = {
-        'data-api' => "#{@url}/landregistry/id/#{name}",
-        'dataset' => name
+        'data-api' => data_api,
+        'dataset' => name,
+        'structure-api' => "#{data_api}/structure",
+        'describe-api' => "#{data_api}/describe"
       }
       Dataset.new(endpoint, self)
     end

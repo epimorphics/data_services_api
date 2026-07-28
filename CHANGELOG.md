@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.0.0
+
 ### Changed
 
 - **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
@@ -25,11 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a `retry.data_services_api` notification, fired immediately before
   each retry attempt on a network failure, with `path`, `method`,
   `retry_count`, `exception`, and `will_retry_in`
-
-## 2.0.0
-
-### Changed
-
+- Fixed `Dataset#structure` and `Dataset#describe`, which always raised
+  (`ArgumentError` or `NoMethodError` on `nil`) for any `Dataset` obtained the
+  normal way via `Service#dataset(name)`. That method only ever populated
+  `data-api`/`dataset` in the JSON it hands to `Dataset`, never
+  `structure-api`/`describe-api`, so `structure_api`/`describe_api` were
+  always `nil`. Both are now derived from `data-api` the same way the real
+  `/dataset` listing endpoint returns them (`<data-api>/structure`,
+  `<data-api>/describe`). `Dataset#structure` also called `api_get_json`
+  with a missing required argument, the same class of bug as `Service#datasets`
 - **Breaking**: `Service` no longer does any logging of its own. The `logger:`
   config option has been removed, along with the automatic `Rails.logger`
   wiring, the `puts` debug line, and all `logger.info`/`error`/etc calls.
