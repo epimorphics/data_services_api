@@ -81,6 +81,7 @@ module DataServicesApi
       instrumenter&.instrument(
         'query_result.data_services_api',
         path: URI.parse(http_url).path,
+        query_string: response.env.url.query,
         method: response.env.method.upcase,
         status: response.status,
         returned_rows:
@@ -90,12 +91,14 @@ module DataServicesApi
     end
 
     def get_from_api(http_url, accept_headers, params, options)
-      perform_request(http_url) do |conn|
+      query_params = params.merge(options)
+
+      perform_request(http_url, query_params) do |conn|
         conn.get do |req|
           req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
           req.headers['Accept'] = accept_headers
           req.options.params_encoder = Faraday::FlatParamsEncoder
-          req.params = params.merge(options)
+          req.params = query_params
         end
       end
     end
@@ -116,8 +119,11 @@ module DataServicesApi
     end
 
     # Perform an HTTP request against http_url, timing and instrumenting it consistently
-    # regardless of whether it succeeds, times out, fails to connect, or 404s
-    def perform_request(http_url) # rubocop:disable Metrics/MethodLength
+    # regardless of whether it succeeds, times out, fails to connect, or the remote API
+    # returns an error status or unparseable body. query_params, when given, is only used
+    # to report the query string on connection/service failures (a successful response
+    # reports its own resolved query string from the Faraday response itself)
+    def perform_request(http_url, query_params = nil) # rubocop:disable Metrics/MethodLength
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = create_http_connection(http_url)
 
@@ -125,11 +131,14 @@ module DataServicesApi
       instrument_response(response, start_time)
       response
     rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
-      instrument_connection_failure(http_url, e, start_time)
+      instrument_connection_failure(http_url, query_params, e, start_time)
       raise e
-    rescue Faraday::ResourceNotFound => e
-      instrument_service_exception(http_url, e, start_time)
-      raise e
+    rescue Faraday::Error => e
+      service_exception = ServiceException.new(
+        e.message, e.response_status, http_url, e.response_body
+      )
+      instrument_service_exception(http_url, query_params, service_exception, start_time)
+      raise service_exception
     end
 
     def create_http_connection(http_url) # rubocop:disable Metrics/MethodLength
@@ -144,8 +153,8 @@ module DataServicesApi
         # Faraday::ResourceNotFound (404) is not transient and is deliberately not retried.
         # Inner middleware exhausts its own budget before the exception reaches the next layer,
         # so stack the more conservative timeout retry inside the more generous connection retry.
-        config.request :retry, @connection_failed_retry_options
-        config.request :retry, @timeout_retry_options
+        config.request :retry, with_retry_instrumentation(@connection_failed_retry_options)
+        config.request :retry, with_retry_instrumentation(@timeout_retry_options)
 
         config.response :json
         # ! Since responses are processed by the middleware stack in reverse order
@@ -153,6 +162,33 @@ module DataServicesApi
         # ! Passing the logger in last ensures that errors are logged before the exception is raised.
         config.response :logger, @faraday_logger, @faraday_logger_options if @faraday_logger
       end
+    end
+
+    # Add a retry_block to the given faraday-retry options that fires a
+    # retry.data_services_api notification before each retry attempt, preserving any
+    # retry_block the caller already configured
+    def with_retry_instrumentation(options)
+      return options unless instrumenter
+
+      original_retry_block = options[:retry_block]
+
+      options.merge(
+        retry_block: lambda do |env:, options:, retry_count:, exception:, will_retry_in:|
+          original_retry_block&.call(env:, options:, retry_count:, exception:, will_retry_in:)
+          instrument_retry(env, retry_count, exception, will_retry_in)
+        end
+      )
+    end
+
+    def instrument_retry(env, retry_count, exception, will_retry_in)
+      instrumenter.instrument(
+        'retry.data_services_api',
+        path: env.url.path,
+        method: env.method.to_s.upcase,
+        retry_count: retry_count + 1,
+        exception:,
+        will_retry_in:
+      )
     end
 
     def as_http_api(api)
@@ -171,30 +207,27 @@ module DataServicesApi
       )
     end
 
-    def instrument_connection_failure(http_url, exception, start_time)
+    def instrument_connection_failure(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'connection_failure.data_services_api',
         exception:,
         path: URI.parse(http_url).path,
-        query_string: URI.parse(http_url).query,
+        query_string: query_params && URI.encode_www_form(query_params),
         duration: elapsed_ms(start_time),
         status: 503
       )
     end
 
-    def instrument_service_exception(http_url, exception, start_time)
-      # ServiceException#status vs Faraday::Error#response_status: this method's caller
-      # only ever rescues Faraday::ResourceNotFound, but the status lookup stays duck-typed
-      # in case a ServiceException is ever routed through here too
-      status = exception.respond_to?(:status) ? exception.status : exception.response_status
-
+    # exception is always a ServiceException here: perform_request wraps every
+    # Faraday::Error (bad status, unparseable body, etc) into one before raising
+    def instrument_service_exception(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'service_exception.data_services_api',
         exception:,
         path: URI.parse(http_url).path,
-        query_string: URI.parse(http_url).query,
+        query_string: query_params && URI.encode_www_form(query_params),
         duration: elapsed_ms(start_time),
-        status:
+        status: exception.status
       )
     end
 

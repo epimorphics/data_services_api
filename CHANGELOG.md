@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
+  `Faraday::ServerError`/`Faraday::ParsingError` (any 4xx/5xx status, or an
+  unparseable response body) are no longer raised directly to callers.
+  They're now always wrapped in `DataServicesApi::ServiceException` before
+  being raised, restoring the exception contract that consuming
+  applications were already written against (`e.service_message`, `e.status`)
+  but that this gem had stopped actually providing
+- Fixed `ServiceException#service_message`, which always returned `nil` due
+  to a typo (`initialize` assigned `@service_msg` instead of `@service_message`)
+- `service_exception.data_services_api` now fires for this whole class of
+  failure (previously only `Faraday::ResourceNotFound`/404), and its
+  `query_string` field is now populated correctly from the actual request
+  params instead of always being `nil`
+- Added a `retry.data_services_api` notification, fired immediately before
+  each retry attempt on a network failure, with `path`, `method`,
+  `retry_count`, `exception`, and `will_retry_in`
+
 ## 2.0.0
 
 ### Changed

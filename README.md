@@ -137,6 +137,26 @@ all optional except `url`:
 `Faraday::ResourceNotFound` (404) responses are not retried, since a 404 is
 not a transient failure.
 
+### Errors
+
+`Service` raises two kinds of exception, depending on where the failure
+happened:
+
+- **Network-level failures** — the request never got a response at all —
+  raise Faraday's own `Faraday::TimeoutError` / `Faraday::ConnectionFailed`
+  directly (after retries are exhausted). These are left as-is rather than
+  wrapped, since they're about the transport, not the API
+- **Application-level failures** — the remote API responded, but with an
+  error status (any 4xx/5xx) or a body that couldn't be parsed as JSON —
+  are always raised as `DataServicesApi::ServiceException`, never as the
+  underlying Faraday exception (`Faraday::ResourceNotFound`,
+  `Faraday::ClientError`, `Faraday::ServerError`, `Faraday::ParsingError`,
+  etc). `ServiceException` exposes `status` (the HTTP status code, where
+  available), `service_message` (the underlying error detail), and `source`
+  (the URL that was requested), giving consuming applications one stable
+  type to rescue for this whole category, regardless of which Faraday
+  version or exact status code is behind it
+
 ---
 
 ## Developer notes
@@ -225,11 +245,15 @@ configured `instrumenter`:
 - `query_result.data_services_api` - the outcome of a `Service#dataset` query,
   including request `path`, HTTP `method`, response `status`, and
   `returned_rows`
-- `connection_failure.data_services_api` - failure to connect to the API,
-  with exception detail, `path`, `query_string`, `duration` and `status`
-- `service_exception.data_services_api` - failure to process the API
-  response, with exception detail, `path`, `query_string`, `duration` and
-  `status`
+- `connection_failure.data_services_api` - failure to connect to the API
+  (timeout or refused connection), with exception detail, `path`,
+  `query_string`, `duration` and `status`
+- `service_exception.data_services_api` - the remote API returned an error
+  status (4xx/5xx) or an unparseable response body, with exception detail,
+  `path`, `query_string`, `duration` and `status`
+- `retry.data_services_api` - fired immediately before each retry attempt
+  (network failures only), with `path`, `method`, `retry_count` (1-indexed),
+  `exception`, and `will_retry_in` (seconds until the retry is attempted)
 
 Subscribe to these from the consuming application to log or monitor them, for
 example:

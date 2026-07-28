@@ -85,14 +85,18 @@ describe 'DataServicesAPI::Service' do
   it 'should also instrument an API Service Exception' do
     mock_notifier = MockNotifications.new
 
-    _ do
+    error = _ do
       DataServicesApi::Service
         .new(url: api_url, instrumenter: mock_notifier)
         .api_get_json("#{api_url}/ceci/nest/pas/une/page", { '_limit' => 1 })
-    end.must_raise
+    end.must_raise DataServicesApi::ServiceException
 
-    event_names = mock_notifier.instrumentations.map(&:first)
-    _(event_names).must_include 'service_exception.data_services_api'
+    _(error.status).must_equal 404
+
+    _, payload = mock_notifier.instrumentations.find { |n, _| n == 'service_exception.data_services_api' }
+    _(payload).wont_be_nil
+    _(payload[:status]).must_equal 404
+    _(payload[:query_string]).must_equal '_limit=1'
   end
 
   it 'should include the returned row count in the query result instrumentation' do
@@ -124,5 +128,21 @@ describe 'DataServicesAPI::Service' do
 
     _(datasets.size).must_be :>, 0
     _(datasets.first).must_be_instance_of(DataServicesApi::Dataset)
+  end
+
+  it 'should instrument each retry attempt before giving up on a failed connection' do
+    mock_api_url = 'http://localhost:8765'
+    mock_notifier = MockNotifications.new
+
+    _ do
+      DataServicesApi::Service
+        .new(url: mock_api_url, instrumenter: mock_notifier,
+             connection_failed_retry_options: { max: 2, interval: 0 })
+        .api_get_json("#{mock_api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
+    end.must_raise
+
+    retries = mock_notifier.instrumentations.select { |entry| entry.first == 'retry.data_services_api' }
+    _(retries.size).must_equal 2
+    _(retries.map { |_, payload| payload[:retry_count] }).must_equal [1, 2]
   end
 end
