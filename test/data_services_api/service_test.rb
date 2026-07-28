@@ -65,7 +65,6 @@ describe 'DataServicesAPI::Service' do
 
     event_names = mock_notifier.instrumentations.map(&:first)
     _(event_names).must_include 'response.data_services_api'
-    _(event_names).must_include 'query_result.data_services_api'
   end
 
   it 'should instrument a failed API call' do
@@ -99,16 +98,16 @@ describe 'DataServicesAPI::Service' do
     _(payload[:query_string]).must_equal '_limit=1'
   end
 
-  it 'should include the returned row count in the query result instrumentation' do
+  it 'should let subscribers derive the returned row count from the response payload' do
     mock_notifier = MockNotifications.new
 
     DataServicesApi::Service
       .new(url: api_url, instrumenter: mock_notifier)
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
-    _, payload = mock_notifier.instrumentations.find { |name, _| name == 'query_result.data_services_api' }
+    _, payload = mock_notifier.instrumentations.find { |name, _| name == 'response.data_services_api' }
     _(payload).wont_be_nil
-    _(payload[:returned_rows]).wont_be_nil
+    _(payload[:response].body['items']).wont_be_nil
   end
 
   it 'should correctly receive a duration in microseconds' do

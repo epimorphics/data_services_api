@@ -76,21 +76,8 @@ module DataServicesApi
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength
-      response = get_from_api(http_url, 'application/json', params, options)
-      response_body = response.body
-      returned_rows = response_body['items'] ? response_body['items'].size : 0
-
-      instrumenter&.instrument(
-        'query_result.data_services_api',
-        path: URI.parse(http_url).path,
-        query_string: response.env.url.query,
-        method: response.env.method.upcase,
-        status: response.status,
-        returned_rows:
-      )
-
-      response_body
+    def get_json(http_url, params, options)
+      get_from_api(http_url, 'application/json', params, options).body
     end
 
     def get_from_api(http_url, accept_headers, params, options)

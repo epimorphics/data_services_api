@@ -241,10 +241,11 @@ configured `instrumenter`:
 - `requests.data_services_api` - raw Faraday request/response timing, emitted
   by Faraday's own instrumentation middleware
 - `response.data_services_api` - API response, including the `Faraday::Response`
-  object and request duration
-- `query_result.data_services_api` - the outcome of a `Service#dataset` query,
-  including request `path`, HTTP `method`, response `status`, and
-  `returned_rows`
+  object and request duration. `path`, `query_string`, `method`, `status`,
+  and (for dataset queries) a returned row count are all derivable from the
+  `Faraday::Response` object itself (`response.env.url`, `response.status`,
+  `response.body['items']&.size`), so they're not duplicated as separate
+  payload fields
 - `connection_failure.data_services_api` - failure to connect to the API
   (timeout or refused connection), with exception detail, `path`,
   `query_string`, `duration` and `status`

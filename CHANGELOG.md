@@ -47,10 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `requests.api` -> `requests.data_services_api`,
   `response.api` -> `response.data_services_api`,
   `connection_failure.api` -> `connection_failure.data_services_api`,
-  `service_exception.api` -> `service_exception.data_services_api`. A new
-  `query_result.data_services_api` event carries the request path, method,
-  status, and returned row count that used to only be visible in the removed
-  log output
+  `service_exception.api` -> `service_exception.data_services_api`. Fields
+  that used to only be visible in the removed log output (request path,
+  method, status, returned row count) are all derivable by subscribers from
+  the `Faraday::Response` object already included in `response.data_services_api`'s
+  payload, so they aren't duplicated as separate event fields
 - **Breaking**: Faraday's built-in request/response logging middleware is no
   longer enabled automatically in Rails. It's now opt-in via
   `Service.new(faraday_logger:)`, passing a logger object to hand to Faraday.
