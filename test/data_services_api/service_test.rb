@@ -118,4 +118,11 @@ describe 'DataServicesAPI::Service' do
     _(payload).wont_be_nil
     _(payload[:duration]).must_be :>, 0
   end
+
+  it 'should return a list of defined datasets' do
+    datasets = @service.datasets
+
+    _(datasets.size).must_be :>, 0
+    _(datasets.first).must_be_instance_of(DataServicesApi::Dataset)
+  end
 end

@@ -30,6 +30,8 @@ module DataServicesApi
       log_level: :debug
     }.freeze
 
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS = 600
+
     def initialize(config = {}) # rubocop:disable Metrics/MethodLength
       @instrumenter = config[:instrumenter] || (in_rails? && ActiveSupport::Notifications)
       @faraday_logger = config[:faraday_logger]
@@ -37,6 +39,7 @@ module DataServicesApi
         config[:faraday_logger_options] || {}
       )
       @url = config[:url]
+      @connection_timeout = config[:connection_timeout] || DEFAULT_CONNECTION_TIMEOUT_SECONDS
       @connection_failed_retry_options = DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS.merge(
         config[:connection_failed_retry_options] || {}
       )
@@ -46,7 +49,7 @@ module DataServicesApi
     end
 
     def datasets
-      api_get_json('/dataset').map { |json| Dataset.new(json, self) }
+      api_get_json('/dataset', {}).map { |json| Dataset.new(json, self) }
     end
 
     def dataset(name)
@@ -86,54 +89,55 @@ module DataServicesApi
       response_body
     end
 
-    def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      conn = set_connection_timeout(create_http_connection(http_url))
-
-      response = conn.get do |req|
-        req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
-        req.headers['Accept'] = accept_headers
-        req.options.params_encoder = Faraday::FlatParamsEncoder
-        req.params = params.merge(options)
+    def get_from_api(http_url, accept_headers, params, options)
+      perform_request(http_url) do |conn|
+        conn.get do |req|
+          req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
+          req.headers['Accept'] = accept_headers
+          req.options.params_encoder = Faraday::FlatParamsEncoder
+          req.params = params.merge(options)
+        end
       end
-
-      instrument_response(response, start_time)
-
-      ok?(response, http_url) && response
-    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
-      instrument_connection_failure(http_url, e, start_time)
-      raise e
-    rescue Faraday::ResourceNotFound, ServiceException => e
-      instrument_service_exception(http_url, e, start_time)
-      raise e
     end
 
     def post_json(http_url, json)
       post_to_api(http_url, json).body
     end
 
-    def post_to_api(http_url, json) # rubocop:disable Metrics/AbcSize
-      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      conn = set_connection_timeout(create_http_connection(http_url))
-
-      response = conn.post do |req|
-        req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
-        req.headers['Accept'] = 'application/json'
-        req.headers['Content-Type'] = 'application/json'
-        req.body = json
+    def post_to_api(http_url, json)
+      perform_request(http_url) do |conn|
+        conn.post do |req|
+          req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
+          req.headers['Accept'] = 'application/json'
+          req.headers['Content-Type'] = 'application/json'
+          req.body = json
+        end
       end
-
-      instrument_response(response, start_time)
-
-      ok?(response, http_url) && response
     end
 
-    def create_http_connection(http_url, auth = false) # rubocop:disable Metrics/MethodLength
+    # Perform an HTTP request against http_url, timing and instrumenting it consistently
+    # regardless of whether it succeeds, times out, fails to connect, or 404s
+    def perform_request(http_url) # rubocop:disable Metrics/MethodLength
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
+      conn = create_http_connection(http_url)
+
+      response = yield(conn)
+      instrument_response(response, start_time)
+      response
+    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
+      instrument_connection_failure(http_url, e, start_time)
+      raise e
+    rescue Faraday::ResourceNotFound => e
+      instrument_service_exception(http_url, e, start_time)
+      raise e
+    end
+
+    def create_http_connection(http_url) # rubocop:disable Metrics/MethodLength
       Faraday.new(url: http_url) do |config|
+        config.options[:timeout] = @connection_timeout
         config.use Faraday::Request::UrlEncoded
         config.use Faraday::FollowRedirects::Middleware
 
-        config.request :authorization, :basic, api_user, api_pw if auth
         if instrumenter
           config.request :instrumentation, name: 'requests.data_services_api', instrumenter:
         end
@@ -151,29 +155,11 @@ module DataServicesApi
       end
     end
 
-    def set_connection_timeout(conn) # rubocop:disable Naming/AccessorMethodName
-      conn.options[:timeout] = 600
-      conn
-    end
-
-    def ok?(response, http_url)
-      unless (200..207).cover?(response.status)
-        response_body = JSON.parse(response.body, symbolize_names: true)
-        response_message = response_body[:message]
-        response_error = response_body[:error]
-        msg = "#{response_error}: #{response_message}"
-
-        raise ServiceException.new(msg, response.status, http_url, response.body)
-      end
-
-      true
-    end
-
     def as_http_api(api)
       return api if api.start_with?('http://', 'https://')
 
       # if the API is a relative path, append to the base URL
-      URI::HTTP.build(host: @url, path: api).to_s
+      URI.join(@url, api).to_s
     end
 
     def instrument_response(response, start_time)
@@ -197,6 +183,9 @@ module DataServicesApi
     end
 
     def instrument_service_exception(http_url, exception, start_time)
+      # ServiceException#status vs Faraday::Error#response_status: this method's caller
+      # only ever rescues Faraday::ResourceNotFound, but the status lookup stays duck-typed
+      # in case a ServiceException is ever routed through here too
       status = exception.respond_to?(:status) ? exception.status : exception.response_status
 
       instrumenter&.instrument(

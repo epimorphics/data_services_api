@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
   }
 
   spec.add_dependency 'faraday', '~> 2.13', '>= 2.13.0'
-  spec.add_dependency 'faraday-encoding', '~> 0.0', '>= 0.0.6'
   spec.add_dependency 'faraday-follow_redirects', '~> 0.4', '>= 0.4.0'
   spec.add_dependency 'faraday-retry', '~> 2.0', '>= 2.0'
   spec.add_dependency 'json', '~> 2.0'

@@ -45,6 +45,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   second time with Yajl for no benefit. This also fixes the gem being broken
   out of the box for any consumer that didn't separately `require 'yajl'`
   themselves, since this gem's own `require "yajl"` had been commented out
+- Removed the unused `faraday-encoding` dependency; nothing in the gem
+  configures Faraday's `:encoding` middleware
+- Fixed `Service#datasets`, which always raised `ArgumentError` (it called
+  `api_get_json` with a missing required argument). Confirmed unused by
+  every consuming app currently on this gem, which explains why it went
+  unnoticed
+- Fixed `Service#as_http_api`, which raised `URI::InvalidComponentError`
+  whenever `url:` was configured with a scheme (exactly as the README's own
+  usage example shows) and a relative path was passed to `api_get_json`/
+  `api_post_json`. Also unused by any current consumer, since all existing
+  calls happen to pass a full URL rather than a relative path
+- Removed `Service#ok?`, which was unreachable in practice (Faraday's
+  `raise_error` middleware already raises on all 4xx/5xx before `ok?` could
+  run) and would have raised a `TypeError` itself if it ever did run, since
+  `response.body` is already a parsed Hash by that point, not a JSON string
+- Removed the dead, non-functional `auth` parameter from the private
+  `create_http_connection`; no caller passed `auth: true`, and the
+  `api_user`/`api_pw` methods it referenced don't exist
+- Added a `connection_timeout` config option (defaulting to the previous
+  hardcoded `600` seconds) for consistency with the other configurable
+  retry/timeout options
+- Extracted the duplicated request-timing/instrumentation/rescue logic in
+  `get_from_api`/`post_to_api` into a shared `perform_request` helper
 
 ## 1.7.0 - 2026-07-13
 
