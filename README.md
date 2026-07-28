@@ -106,13 +106,22 @@ into the legacy DsAPI JSON format.
 all optional except `url`:
 
 - `url` - the base URL of the Sapi-NT API to query against
-- `instrumenter` - an object responding to `instrument(name, payload)`, used
-  to emit the `response.api`, `connection_failure.api` and
-  `service_exception.api` notifications described below. Defaults to
-  `ActiveSupport::Notifications` when running under Rails, otherwise `nil`
-- `logger` - an object responding to the standard `Logger` levels
-  (`info`, `warn`, `error`, `debug`), used to log request/response details.
-  Defaults to `Rails.logger` when running under Rails, otherwise `nil`
+- `instrumenter` - an object responding to `instrument(name, payload, &block)`
+  (e.g. `ActiveSupport::Notifications`), used to emit the notifications
+  described below. Defaults to `ActiveSupport::Notifications` when running
+  under Rails, otherwise `nil`. The gem itself never logs anything: consuming
+  applications are expected to subscribe to these notifications and log
+  whatever they need, in whatever format and at whatever level they choose
+- `faraday_logger` - an object responding to the standard `Logger` levels
+  (`info`, `warn`, `error`, `debug`). When given, enables Faraday's own
+  request/response logging middleware, passing this object to it. Not
+  enabled unless explicitly configured
+- `faraday_logger_options` - options passed to Faraday's logging middleware
+  (`headers`, `bodies`, `errors`, `log_level`), only relevant when
+  `faraday_logger` is also given. Merged over the default of
+  `headers: false, bodies: false, errors: false, log_level: :debug`, so
+  Faraday's request/response one-liners log at `debug` by default, staying
+  quiet unless the consuming app turns its own logger's level down
 - `connection_failed_retry_options` - a hash of
   [`faraday-retry`](https://github.com/lostisland/faraday-retry) options
   (`max`, `interval`, `interval_randomness`, `backoff_factor`) applied to
@@ -205,10 +214,28 @@ local credentials required.
 
 ### Prometheus monitoring
 
-This gem integrates with Prometheus monitoring by emitting the following
-`ActiveSupport::Notification`s:
+This gem integrates with Prometheus monitoring, and supports general-purpose
+logging, by emitting the following `ActiveSupport::Notification`s via the
+configured `instrumenter`:
 
-- `response.api` - API response, including status code and duration
-- `connection_failure.api` - failure to connect to the API, with exception
-  detail
-- `service_exception.api` - failure to process the API response
+- `requests.data_services_api` - raw Faraday request/response timing, emitted
+  by Faraday's own instrumentation middleware
+- `response.data_services_api` - API response, including the `Faraday::Response`
+  object and request duration
+- `query_result.data_services_api` - the outcome of a `Service#dataset` query,
+  including request `path`, HTTP `method`, response `status`, and
+  `returned_rows`
+- `connection_failure.data_services_api` - failure to connect to the API,
+  with exception detail, `path`, `query_string`, `duration` and `status`
+- `service_exception.data_services_api` - failure to process the API
+  response, with exception detail, `path`, `query_string`, `duration` and
+  `status`
+
+Subscribe to these from the consuming application to log or monitor them, for
+example:
+
+```ruby
+ActiveSupport::Notifications.subscribe('response.data_services_api') do |*, payload|
+  Rails.logger.info(payload.slice(:duration).to_json)
+end
+```

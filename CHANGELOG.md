@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.0.0
+
+### Changed
+
+- **Breaking**: `Service` no longer does any logging of its own. The `logger:`
+  config option has been removed, along with the automatic `Rails.logger`
+  wiring, the `puts` debug line, and all `logger.info`/`error`/etc calls.
+  Consuming applications should subscribe to the gem's
+  `ActiveSupport::Notifications` events instead and log whatever they need,
+  at whatever level and format they choose
+- **Breaking**: instrumentation event names are now namespaced under
+  `data_services_api` instead of the generic, collision-prone `.api` suffix:
+  `requests.api` -> `requests.data_services_api`,
+  `response.api` -> `response.data_services_api`,
+  `connection_failure.api` -> `connection_failure.data_services_api`,
+  `service_exception.api` -> `service_exception.data_services_api`. A new
+  `query_result.data_services_api` event carries the request path, method,
+  status, and returned row count that used to only be visible in the removed
+  log output
+- **Breaking**: Faraday's built-in request/response logging middleware is no
+  longer enabled automatically in Rails. It's now opt-in via
+  `Service.new(faraday_logger:)`, passing a logger object to hand to Faraday.
+  When enabled, it still defaults to logging at `debug` level with headers/
+  bodies/errors off (matching the old always-on behaviour), configurable via
+  `Service.new(faraday_logger_options:)`
+- Fixed a bug where `service_exception.api`/`connection_failure.api` were
+  never logged outside of a Rails environment; the new notification events
+  fire consistently regardless of environment
+- Fixed a `NameError` (`RACK::Exception` instead of `Rack::Exception`) in the
+  service-exception error path that would raise whenever a `Faraday::ResourceNotFound`
+  without a `status` reached it
+- Removed the `yajl-ruby` dependency and the `Service#parser`/`parse_json`
+  machinery built on it. Response bodies are already parsed to Ruby
+  Hash/Array by Faraday's own `:json` response middleware; the removed code
+  was re-serializing that result back to a JSON string and parsing it a
+  second time with Yajl for no benefit. This also fixes the gem being broken
+  out of the box for any consumer that didn't separately `require 'yajl'`
+  themselves, since this gem's own `require "yajl"` had been commented out
+
 ## 1.7.0 - 2026-07-13
 
 ### Added
