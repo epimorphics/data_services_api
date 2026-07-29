@@ -137,6 +137,10 @@ module DataServicesApi
         config.use Faraday::Request::UrlEncoded
         config.use Faraday::FollowRedirects::Middleware
 
+        # `requests.data_services_api`, emitted by Faraday's own instrumentation
+        # middleware, is the one hook whose payload is NOT a plain Hash: it's the
+        # raw Faraday::Env for the request (method, url, request_headers, etc, via
+        # Faraday::Env's own accessors), unlike every other event below.
         if instrumenter
           config.request :instrumentation, name: 'requests.data_services_api', instrumenter:
         end
@@ -170,6 +174,13 @@ module DataServicesApi
       )
     end
 
+    # Fires 'retry.data_services_api' immediately before a retry attempt, with
+    # path (String), method (String, upcased), retry_count (Integer),
+    # exception, and will_retry_in (Float seconds until the retry fires - note
+    # this is seconds, not the milliseconds :duration uses on the other events
+    # below). exception is normally Faraday::TimeoutError or ConnectionFailed;
+    # it would be the synthetic Faraday::RetriableResponse if a status-code-based
+    # retry_statuses: were ever configured, which this gem doesn't set today.
     def instrument_retry(env, retry_count, exception, will_retry_in)
       instrumenter.instrument(
         'retry.data_services_api',
@@ -188,6 +199,11 @@ module DataServicesApi
       URI.join(@url, api).to_s
     end
 
+    # Fires 'response.data_services_api' for every response that doesn't raise,
+    # with response (the raw Faraday::Response - path/query_string/method are
+    # all derivable from response.env.url/.method rather than duplicated as
+    # separate payload keys) and duration (Integer milliseconds, floor-divided
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
     def instrument_response(response, start_time)
       elapsed_time = elapsed_ms(start_time)
       instrumenter&.instrument(
@@ -197,6 +213,14 @@ module DataServicesApi
       )
     end
 
+    # Fires 'connection_failure.data_services_api' on a network-level failure
+    # (after retries are exhausted): the request never got a response at all.
+    # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
+    # (String, no scheme/host/query), query_string (String or nil - nil for
+    # POST requests, which never pass query_params, and for GET requests with
+    # no params), duration (Integer milliseconds, see #instrument_response),
+    # and status (always the literal 503 - a fixed value, not derived from any
+    # actual response, since none was received).
     def instrument_connection_failure(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'connection_failure.data_services_api',
@@ -208,8 +232,16 @@ module DataServicesApi
       )
     end
 
-    # exception is always a ServiceException here: perform_request wraps every
-    # Faraday::Error (bad status, unparseable body, etc) into one before raising
+    # Fires 'service_exception.data_services_api' when the remote API responded
+    # but with an error status or an unparseable body. exception is always a
+    # ServiceException here: perform_request wraps every Faraday::Error (bad
+    # status, unparseable body, etc) into one before raising, so subscribers
+    # never see a raw Faraday::ResourceNotFound/ClientError/ServerError/ParsingError.
+    # Payload also has path and query_string (same shape/nilability as
+    # #instrument_connection_failure), duration (Integer milliseconds), and
+    # status (Integer or nil - nil if Faraday never associated a response with
+    # the error; see Faraday::Error#response_status, which can happen for some
+    # Faraday::ParsingError cases).
     def instrument_service_exception(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'service_exception.data_services_api',

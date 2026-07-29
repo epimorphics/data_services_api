@@ -238,29 +238,147 @@ This gem integrates with Prometheus monitoring, and supports general-purpose
 logging, by emitting the following `ActiveSupport::Notification`s via the
 configured `instrumenter`:
 
-- `requests.data_services_api` - raw Faraday request/response timing, emitted
-  by Faraday's own instrumentation middleware
-- `response.data_services_api` - API response, including the `Faraday::Response`
-  object and request duration. `path`, `query_string`, `method`, `status`,
-  and (for dataset queries) a returned row count are all derivable from the
-  `Faraday::Response` object itself (`response.env.url`, `response.status`,
-  `response.body['items']&.size`), so they're not duplicated as separate
-  payload fields
-- `connection_failure.data_services_api` - failure to connect to the API
-  (timeout or refused connection), with exception detail, `path`,
-  `query_string`, `duration` and `status`
-- `service_exception.data_services_api` - the remote API returned an error
-  status (4xx/5xx) or an unparseable response body, with exception detail,
-  `path`, `query_string`, `duration` and `status`
-- `retry.data_services_api` - fired immediately before each retry attempt
-  (network failures only), with `path`, `method`, `retry_count` (1-indexed),
-  `exception`, and `will_retry_in` (seconds until the retry is attempted)
+- **`requests.data_services_api`** - emitted by Faraday's own instrumentation
+  middleware, for every request. **Its payload is not a Hash** like every
+  other event below - it's the raw `Faraday::Env` for the request (read
+  fields via its own accessors, e.g. `env.method`, `env.url`), so a
+  subscriber to this event needs different handling than the rest.
+- **`response.data_services_api`** - fires for every response that doesn't
+  raise (both GET and POST).
+- **`connection_failure.data_services_api`** - a network-level failure
+  (timeout or refused connection), after retries are exhausted. The request
+  never got a response at all.
+- **`service_exception.data_services_api`** - the remote API responded, but
+  with an error status (any 4xx/5xx) or an unparseable body. The exception in
+  this payload is always a `DataServicesApi::ServiceException` - Faraday's own
+  exception types are wrapped before a subscriber ever sees them.
+- **`retry.data_services_api`** - fired immediately before each retry attempt
+  on a network failure (not for `service_exception`-class failures, which
+  aren't retried).
 
-Subscribe to these from the consuming application to log or monitor them, for
-example:
+Payload fields, by event (fields are Hash keys except where noted; `-` means
+the event doesn't include that field):
+
+| Field | Type | requests<sup>†</sup> | response | connection_failure | service_exception | retry |
+|---|---|---|---|---|---|---|
+| `response` | `Faraday::Response` | - | ✓ | - | - | - |
+| `exception` | see note | - | - | `Faraday::TimeoutError`/`ConnectionFailed` | `ServiceException` | see note |
+| `path` | `String` (bare path, no scheme/host/query) | - | -<sup>‡</sup> | ✓ | ✓ | ✓ |
+| `query_string` | `String`, nilable<sup>§</sup> | - | -<sup>‡</sup> | ✓ | ✓ | - |
+| `method` | `String`, upcased | - | -<sup>‡</sup> | - | - | ✓ |
+| `status` | `Integer`, nilable | - | -<sup>‡</sup> | always `503` | nilable<sup>¶</sup> | - |
+| `duration` | `Integer`, **milliseconds** | - | ✓ | ✓ | ✓ | - |
+| `will_retry_in` | `Float`, **seconds** | - | - | - | - | ✓ |
+| `retry_count` | `Integer`, 1-indexed | - | - | - | - | ✓ |
+| `returned_rows` | `Integer`, nilable | - | -<sup>‡</sup> | - | - | - |
+
+<sup>†</sup> `requests.data_services_api`'s payload is a `Faraday::Env`, not a
+Hash - none of these field names apply; see above.<br>
+<sup>‡</sup> derivable from the `response:`/`exception:` object already in
+the payload rather than duplicated as a separate field - see the code
+examples below.<br>
+<sup>§</sup> `nil` for POST requests (which never have query params) and for
+GET requests with no params.<br>
+<sup>¶</sup> `nil` if Faraday never associated a response with the error
+(`Faraday::Error#response_status` returns `nil` in that case - can happen
+for some `Faraday::ParsingError`s).
+
+**`duration` (milliseconds) and `will_retry_in` (seconds) use different units
+and types** - both describe elapsed/remaining time, but come from different
+underlying sources (this gem's own timing vs. `faraday-retry`'s own values
+passed straight through) and were never normalized against each other. This
+is an inconsistency, not an intentional design choice - don't assume the two
+are interchangeable.
+
+**`exception` in `retry.data_services_api`** is normally a raised exception
+(`Faraday::TimeoutError`/`ConnectionFailed`), but per `faraday-retry`'s own
+design it would be the synthetic `Faraday::RetriableResponse` if a
+status-code-based `retry_statuses:` option were ever configured. This gem
+doesn't set that option today, so in practice it's always a real exception -
+but that's this gem's current configuration, not a structural guarantee.
+
+### Subscribing to hooks in a Rails app
+
+The simplest way to subscribe is a block, registered once in an initializer
+(e.g. `config/initializers/data_services_api.rb`):
 
 ```ruby
 ActiveSupport::Notifications.subscribe('response.data_services_api') do |*, payload|
-  Rails.logger.info(payload.slice(:duration).to_json)
+  Rails.logger.info(duration: payload[:duration], status: payload[:response].status)
+end
+
+ActiveSupport::Notifications.subscribe('service_exception.data_services_api') do |*, payload|
+  Rails.logger.error(
+    message: "API service exception: #{payload[:exception].message}",
+    path: payload[:path],
+    status: payload[:status]
+  )
+end
+```
+
+For anything beyond a line or two, an `ActiveSupport::Subscriber` is the more
+idiomatic Rails pattern — one method per event, matched by name
+(`attach_to :data_services_api` routes `response.data_services_api` to a
+`#response` method, and so on):
+
+```ruby
+# app/subscribers/data_services_api_subscriber.rb
+class DataServicesApiSubscriber < ActiveSupport::Subscriber
+  attach_to :data_services_api
+
+  def response(event)
+    response = event.payload[:response]
+    Prometheus::Client.registry.get(:api_status)
+                      .increment(labels: { status: response.status.to_s })
+    Prometheus::Client.registry.get(:api_response_times)
+                      .observe(event.payload[:duration])
+  end
+
+  def connection_failure(event)
+    exception = event.payload[:exception]
+    Prometheus::Client.registry.get(:api_connection_failure).increment
+    Rails.logger.error(message: "API connection failure: #{exception.message}", status: 503)
+  end
+
+  def service_exception(event)
+    exception = event.payload[:exception]
+    Prometheus::Client.registry.get(:api_service_exception).increment
+    Rails.logger.error(message: "API service exception: #{exception.message}", status: event.payload[:status])
+  end
+
+  def retry(event)
+    Rails.logger.warn(
+      message: "Retrying #{event.payload[:method]} #{event.payload[:path]} " \
+                "(attempt #{event.payload[:retry_count]}) in #{event.payload[:will_retry_in]}s",
+      exception: event.payload[:exception].class.name
+    )
+  end
+end
+```
+
+`attach_to :data_services_api` in the class body (as above) subscribes
+immediately when the class loads — no separate initializer call needed.
+A subscriber under `app/subscribers/` is autoloaded the first time it's
+referenced; since nothing in the app calls
+`DataServicesApiSubscriber` directly, eager loading it in
+production (Rails does this automatically for `app/` in production) is
+what makes sure it's actually loaded, and therefore attached, before any
+requests are served. In development, where eager loading is off,
+reference the class once from an initializer instead, so it's guaranteed
+to load (and attach) at boot rather than on first use:
+
+```ruby
+# config/initializers/data_services_api.rb
+DataServicesApiSubscriber
+```
+
+**Deriving the returned row count** (see the note on `response.data_services_api`
+above — it isn't a separate field):
+
+```ruby
+def response(event)
+  response = event.payload[:response]
+  returned_rows = response.body['items']&.size
+  # ...
 end
 ```

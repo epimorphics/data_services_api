@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.0.0
 
+### Documentation
+
+- Documented the exact payload shape of every notification event: added a
+  plain-prose comment above each `instrument_*` method in `service.rb`
+  describing its payload. Writing this down surfaced several undocumented 
+  inconsistencies that are noted explicitly rather than fixed: 
+  `requests.data_services_api`'s payload is a raw `Faraday::Env`, not a
+  Hash like every other event; `duration` (milliseconds, `Integer`) and 
+  `will_retry_in` (seconds, `Float`) describe similar things in different
+  units; `path` is a bare `String` on most events but only derivable from
+  a `URI` object via `response:` on `response.data_services_api`;
+  `status` can be `nil` on `service_exception.data_services_api`;
+   `query_string` is always `nil` for POST-triggered failures
+
 ### Changed
 
 - **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
