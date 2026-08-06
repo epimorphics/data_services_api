@@ -10,12 +10,12 @@ module DataServicesApi
       @service = service
     end
 
-    def id
+    def id # steep:ignore MethodBodyTypeMismatch
       @json['@id']
     end
 
     def method_missing(attribute)
-      respond_to_missing?(attribute) ? @json[attribute.to_s] : super
+      respond_to_missing?(attribute, nil) ? @json[attribute.to_s] : super
     end
 
     def respond_to_missing?(attribute, _args = nil)
@@ -26,7 +26,7 @@ module DataServicesApi
       @json['data-api']
     end
 
-    def dataset
+    def dataset # steep:ignore MethodBodyTypeMismatch
       @json['dataset']
     end
 

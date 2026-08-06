@@ -130,7 +130,7 @@ module DataServicesApi
 
     def create_http_connection(http_url) # rubocop:disable Metrics/MethodLength
       Faraday.new(url: http_url) do |config|
-        config.options[:timeout] = @connection_timeout
+        config.options.timeout = @connection_timeout
         config.use Faraday::Request::UrlEncoded
         config.use Faraday::FollowRedirects::Middleware
 
