@@ -19,6 +19,7 @@ group :development, :test do
   gem 'rake'
   gem 'rubocop'
   gem 'simplecov', require: false
+  gem 'steep', require: false
   gem 'vcr'
   gem 'webmock'
 end
