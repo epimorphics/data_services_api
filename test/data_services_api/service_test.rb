@@ -123,7 +123,7 @@ describe 'DataServicesAPI::Service' do
   end
 
   it 'should return a list of defined datasets' do
-    skip('this endpoint doesn''t exist')
+    skip('this endpoint doesn\'t exist')
     datasets = @service.datasets
 
     _(datasets.size).must_be :>, 0
