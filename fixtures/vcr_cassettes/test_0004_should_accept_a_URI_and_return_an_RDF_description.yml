@@ -15,15 +15,31 @@ http_interactions:
       - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
   response:
     status:
-      code: 200
+      code: 404
       message: ''
     headers:
+      Vary:
+      - Accept
+      - Access-Control-Request-Headers
+      - Access-Control-Request-Method
+      - Origin
+      Cache-Control:
+      - max-age=0
       Content-Type:
       - application/json
+      Content-Length:
+      - '191'
       Date:
-      - Tue, 28 Jul 2026 12:00:00 GMT
+      - Thu, 06 Aug 2026 08:24:53 GMT
     body:
       encoding: UTF-8
-      string: '{"@id":"http://landregistry.data.gov.uk/id/region/south-east","label":"South East"}'
-  recorded_at: Tue, 28 Jul 2026 12:00:00 GMT
+      string: |-
+        {
+          "timestamp" : "Thu Aug 06 08:24:53 GMT 2026",
+          "status" : "404",
+          "error" : "Not Found",
+          "message" : "Requested endpoint doesn't exist",
+          "path" : "/landregistry/id/ukhpi/describe"
+        }
+  recorded_at: Thu, 06 Aug 2026 08:24:53 GMT
 recorded_with: VCR 6.3.1

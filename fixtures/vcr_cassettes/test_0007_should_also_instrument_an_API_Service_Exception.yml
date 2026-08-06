@@ -8,7 +8,7 @@ http_interactions:
       string: ''
     headers:
       User-Agent:
-      - Faraday v1.10.2
+      - Faraday v2.14.0
       Accept:
       - application/json
       Accept-Encoding:
@@ -18,108 +18,6 @@ http_interactions:
       code: 404
       message: ''
     headers:
-      Sleuth-Trace-Id:
-      - b67d24ec0df3ace6
-      Sleuth-Span-Id:
-      - b67d24ec0df3ace6
-      Vary:
-      - Accept
-      - Access-Control-Request-Headers
-      - Access-Control-Request-Method
-      - Origin
-      Cache-Control:
-      - max-age=0
-      Content-Type:
-      - application/json;charset=UTF-8
-      Content-Length:
-      - '183'
-      Date:
-      - Wed, 21 Jun 2023 13:00:41 GMT
-    body:
-      encoding: UTF-8
-      string: |-
-        {
-          "timestamp" : "Wed Jun 21 13:00:41 GMT 2023",
-          "status" : "404",
-          "error" : "Not Found",
-          "message" : "Requested endpoint doesn't exist",
-          "path" : "/ceci/nest/pas/une/page"
-        }
-  recorded_at: Wed, 21 Jun 2023 13:00:41 GMT
-- request:
-    method: get
-    uri: https://hmlr-dev-pres.epimorphics.net/ceci/nest/pas/une/page?_limit=1
-    body:
-      encoding: US-ASCII
-      string: ''
-    headers:
-      User-Agent:
-      - Faraday v2.13.4
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
-  response:
-    status:
-      code: 200
-      message: OK
-    headers:
-      Cache-Control:
-      - no-cache
-      Content-Type:
-      - text/html; charset=utf-8
-      Date:
-      - Mon, 28 Jul 2025 11:54:21 GMT
-      Referrer-Policy:
-      - strict-origin-when-cross-origin
-      Server:
-      - nginx/1.27.5
-      X-Cache-Status:
-      - MISS
-      X-Content-Type-Options:
-      - nosniff
-      X-Download-Options:
-      - noopen
-      X-Frame-Options:
-      - SAMEORIGIN
-      X-Permitted-Cross-Domain-Policies:
-      - none
-      X-Request-Id:
-      - 8847c72c154a577c6f096245507ec603
-      X-Runtime:
-      - '0.002501'
-      X-Xss-Protection:
-      - 1; mode=block
-      Content-Length:
-      - '0'
-      Connection:
-      - keep-alive
-    body:
-      encoding: UTF-8
-      string: ''
-  recorded_at: Mon, 28 Jul 2025 11:54:21 GMT
-- request:
-    method: get
-    uri: http://localhost:8888/ceci/nest/pas/une/page?_limit=1
-    body:
-      encoding: US-ASCII
-      string: ''
-    headers:
-      User-Agent:
-      - Faraday v2.13.4
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
-  response:
-    status:
-      code: 404
-      message: ''
-    headers:
-      Sleuth-Trace-Id:
-      - ''
-      Sleuth-Span-Id:
-      - ''
       Vary:
       - Accept
       - Access-Control-Request-Headers
@@ -132,62 +30,16 @@ http_interactions:
       Content-Length:
       - '183'
       Date:
-      - Mon, 28 Jul 2025 17:05:12 GMT
+      - Thu, 06 Aug 2026 08:24:45 GMT
     body:
       encoding: UTF-8
       string: |-
         {
-          "timestamp" : "Mon Jul 28 17:05:12 GMT 2025",
+          "timestamp" : "Thu Aug 06 08:24:45 GMT 2026",
           "status" : "404",
           "error" : "Not Found",
           "message" : "Requested endpoint doesn't exist",
           "path" : "/ceci/nest/pas/une/page"
         }
-  recorded_at: Mon, 28 Jul 2025 17:05:12 GMT
-- request:
-    method: get
-    uri: http://localhost:8888/ceci/nest/pas/une/page?_limit=1
-    body:
-      encoding: US-ASCII
-      string: ''
-    headers:
-      User-Agent:
-      - Faraday v2.13.4
-      Accept:
-      - application/json
-      Accept-Encoding:
-      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
-  response:
-    status:
-      code: 404
-      message: ''
-    headers:
-      Sleuth-Trace-Id:
-      - ''
-      Sleuth-Span-Id:
-      - ''
-      Vary:
-      - Accept
-      - Access-Control-Request-Headers
-      - Access-Control-Request-Method
-      - Origin
-      Cache-Control:
-      - max-age=0
-      Content-Type:
-      - application/json
-      Content-Length:
-      - '183'
-      Date:
-      - Mon, 28 Jul 2025 17:05:12 GMT
-    body:
-      encoding: UTF-8
-      string: |-
-        {
-          "timestamp" : "Mon Jul 28 17:05:12 GMT 2025",
-          "status" : "404",
-          "error" : "Not Found",
-          "message" : "Requested endpoint doesn't exist",
-          "path" : "/ceci/nest/pas/une/page"
-        }
-  recorded_at: Mon, 28 Jul 2025 17:05:12 GMT
+  recorded_at: Thu, 06 Aug 2026 08:24:45 GMT
 recorded_with: VCR 6.3.1
