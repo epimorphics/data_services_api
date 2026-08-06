@@ -1,0 +1,29 @@
+module DataServicesApi
+  # Encapsulates a DSAPI Aspect
+  # This corresponds to one of the measures of the underlying data cube, which
+  # becomes an _aspect_ of the object description that the DSApi query encapsulates.
+  # See https://github.com/epimorphics/data-API/wiki/Data-Query-Syntax
+  class Aspect
+    @json: untyped
+
+    @service: untyped
+
+    attr_reader service: untyped
+
+    def initialize: (untyped json, untyped service) -> void
+
+    def id: () -> untyped
+
+    alias uri id
+
+    def method_missing: (untyped name) -> untyped
+
+    def respond_to_missing?: (untyped name, ?untyped? _args) -> untyped
+
+    def optional?: () -> untyped
+
+    def multi_valued?: () -> untyped
+
+    def range_type: () -> untyped
+  end
+end

@@ -1,0 +1,111 @@
+module DataServicesApi
+  # Denotes the encapsulated DataServicesAPI service
+  class Service
+    @instrumenter: untyped
+
+    @faraday_logger: untyped
+
+    @faraday_logger_options: untyped
+
+    @url: untyped
+
+    @connection_timeout: untyped
+
+    @connection_failed_retry_options: untyped
+
+    @timeout_retry_options: untyped
+
+    attr_reader instrumenter: untyped
+
+    attr_reader url: untyped
+
+    DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS: { max: 4, interval: ::Float, interval_randomness: ::Float, backoff_factor: 2, exceptions: ::Array[untyped] }
+
+    DEFAULT_TIMEOUT_RETRY_OPTIONS: { max: 2, interval: ::Float, interval_randomness: ::Float, backoff_factor: 2, exceptions: ::Array[untyped] }
+
+    DEFAULT_FARADAY_LOGGER_OPTIONS: { headers: false, bodies: false, errors: false, log_level: :debug }
+
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS: 600
+
+    def initialize: (?::Hash[untyped, untyped] config) -> void
+
+    def datasets: () -> untyped
+
+    def dataset: (untyped name) -> untyped
+
+    def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> untyped
+
+    def api_post_json: (untyped api, untyped json) -> untyped
+
+    private
+
+    # Get parsed JSON from the given URL
+    def get_json: (untyped http_url, untyped params, untyped options) -> untyped
+
+    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options) -> untyped
+
+    def post_json: (untyped http_url, untyped json) -> untyped
+
+    def post_to_api: (untyped http_url, untyped json) -> untyped
+
+    # Perform an HTTP request against http_url, timing and instrumenting it consistently
+    # regardless of whether it succeeds, times out, fails to connect, or the remote API
+    # returns an error status or unparseable body. query_params, when given, is only used
+    # to report the query string on connection/service failures (a successful response
+    # reports its own resolved query string from the Faraday response itself)
+    def perform_request: (untyped http_url, ?untyped? query_params) { (untyped) -> untyped } -> untyped
+
+    def create_http_connection: (untyped http_url) -> untyped
+
+    # Add a retry_block to the given faraday-retry options that fires a
+    # retry.data_services_api notification before each retry attempt, preserving any
+    # retry_block the caller already configured
+    def with_retry_instrumentation: (untyped options) -> untyped
+
+    # Fires 'retry.data_services_api' immediately before a retry attempt, with
+    # path (String), method (String, upcased), retry_count (Integer),
+    # exception, and will_retry_in (Float seconds until the retry fires - note
+    # this is seconds, not the milliseconds :duration uses on the other events
+    # below). exception is normally Faraday::TimeoutError or ConnectionFailed;
+    # it would be the synthetic Faraday::RetriableResponse if a status-code-based
+    # retry_statuses: were ever configured, which this gem doesn't set today.
+    def instrument_retry: (untyped env, untyped retry_count, untyped exception, untyped will_retry_in) -> untyped
+
+    def as_http_api: (untyped api) -> untyped
+
+    # Fires 'response.data_services_api' for every response that doesn't raise,
+    # with response (the raw Faraday::Response - path/query_string/method are
+    # all derivable from response.env.url/.method rather than duplicated as
+    # separate payload keys) and duration (Integer milliseconds, floor-divided
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
+    def instrument_response: (untyped response, untyped start_time) -> untyped
+
+    # Fires 'connection_failure.data_services_api' on a network-level failure
+    # (after retries are exhausted): the request never got a response at all.
+    # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
+    # (String, no scheme/host/query), query_string (String or nil - nil for
+    # POST requests, which never pass query_params, and for GET requests with
+    # no params), duration (Integer milliseconds, see #instrument_response),
+    # and status (always the literal 503 - a fixed value, not derived from any
+    # actual response, since none was received).
+    def instrument_connection_failure: (untyped http_url, untyped query_params, untyped exception, untyped start_time) -> untyped
+
+    # Fires 'service_exception.data_services_api' when the remote API responded
+    # but with an error status or an unparseable body. exception is always a
+    # ServiceException here: perform_request wraps every Faraday::Error (bad
+    # status, unparseable body, etc) into one before raising, so subscribers
+    # never see a raw Faraday::ResourceNotFound/ClientError/ServerError/ParsingError.
+    # Payload also has path and query_string (same shape/nilability as
+    # #instrument_connection_failure), duration (Integer milliseconds), and
+    # status (Integer or nil - nil if Faraday never associated a response with
+    # the error; see Faraday::Error#response_status, which can happen for some
+    # Faraday::ParsingError cases).
+    def instrument_service_exception: (untyped http_url, untyped query_params, untyped exception, untyped start_time) -> untyped
+
+    # Return true if we're currently running in a Rails environment
+    def in_rails?: () -> untyped
+
+    # The elapsed time in milliseconds since the given CLOCK_MONOTONIC microsecond timestamp
+    def elapsed_ms: (untyped start_time) -> untyped
+  end
+end

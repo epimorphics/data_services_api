@@ -1,0 +1,22 @@
+module DataServicesApi
+  # Encapsulates a single value coming back from the API
+  class Value < Hash
+    def initialize: (?::Hash[untyped, untyped] base, ?::Hash[untyped, untyped] adds) -> void
+
+    def value: () -> untyped
+
+    def type: () -> untyped
+
+    def uri: () -> untyped
+
+    def with_uri: (untyped uri) -> untyped
+
+    def self.uri: (untyped uri) -> untyped
+
+    def with_typed_value: (untyped value, untyped type) -> untyped
+
+    def with_year_month: (untyped year, untyped month) -> untyped
+
+    def self.year_month: (untyped year, untyped month) -> untyped
+  end
+end
