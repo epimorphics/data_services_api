@@ -12,19 +12,19 @@ module DataServicesApi
     end
 
     def value
-      self[:@value]
+      self['@value']
     end
 
-    def type
-      self[:@type]
+    def type # steep:ignore MethodBodyTypeMismatch
+      self['@type']
     end
 
-    def uri
-      self[:@id]
+    def uri # steep:ignore MethodBodyTypeMismatch
+      self['@id']
     end
 
     def with_uri(uri)
-      Value.new(self, '@id': uri)
+      Value.new(self, { '@id' => uri })
     end
 
     def self.uri(uri)
@@ -32,7 +32,7 @@ module DataServicesApi
     end
 
     def with_typed_value(value, type)
-      Value.new(self, '@value': value, '@type': type)
+      Value.new(self, { '@value' => value, '@type' => type })
     end
 
     def with_year_month(year, month)

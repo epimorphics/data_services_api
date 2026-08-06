@@ -18,24 +18,24 @@ describe 'DataServicesApi::Value' do
   it 'should specify a URI' do
     v1 = v.with_uri('http://foo/bar')
     _(v1.size).must_equal 1
-    _(v1[:@id]).must_equal 'http://foo/bar'
+    _(v1['@id']).must_equal 'http://foo/bar'
     _(v1.uri).must_equal 'http://foo/bar'
   end
 
   it 'should have a factory shortcut for creating a URI value' do
     v = DataServicesApi::Value.uri('http://fubar.com')
     _(v.size).must_equal 1
-    _(v[:@id]).must_equal 'http://fubar.com'
+    _(v['@id']).must_equal 'http://fubar.com'
   end
 
   it 'should specify type and value' do
     v1 = v.with_typed_value('foo', 'http://fakexsd.org/bar')
     _(v1.size).must_equal 2
 
-    _(v1[:@value]).must_equal 'foo'
+    _(v1['@value']).must_equal 'foo'
     _(v1.value).must_equal 'foo'
 
-    _(v1[:@type]).must_equal 'http://fakexsd.org/bar'
+    _(v1['@type']).must_equal 'http://fakexsd.org/bar'
     _(v1.type).must_equal 'http://fakexsd.org/bar'
   end
 
