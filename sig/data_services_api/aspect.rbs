@@ -4,26 +4,32 @@ module DataServicesApi
   # becomes an _aspect_ of the object description that the DSApi query encapsulates.
   # See https://github.com/epimorphics/data-API/wiki/Data-Query-Syntax
   class Aspect
-    @json: untyped
+    @json: json_hash
 
     @service: untyped
 
     attr_reader service: untyped
 
-    def initialize: (untyped json, untyped service) -> void
+    def initialize: (json_hash json, untyped service) -> void
 
-    def id: () -> untyped
+    def id: () -> uri
 
     alias uri id
 
     def method_missing: (untyped name) -> untyped
 
-    def respond_to_missing?: (untyped name, ?untyped? _args) -> untyped
+    def respond_to_missing?: (untyped name, ?untyped? _args) -> bool
 
-    def optional?: () -> untyped
+    def optional?: () -> bool
 
-    def multi_valued?: () -> untyped
+    def multi_valued?: () -> bool
 
-    def range_type: () -> untyped
+    def range_type: () -> uri
+
+    def isOptional: () -> bool
+
+    def isMultiValued: () -> bool
+
+    def rangeType: () -> uri
   end
 end

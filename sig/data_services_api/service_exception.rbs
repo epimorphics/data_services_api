@@ -2,18 +2,18 @@ module DataServicesApi
   # A sub-type of RuntimeError for problems that arise when interacting with the
   # DS API
   class ServiceException < RuntimeError
-    @status: untyped
+    @status: int?
 
     @source: untyped
 
-    @service_message: untyped
+    @service_message: string?
 
-    attr_reader status: untyped
+    attr_reader status: int?
 
     attr_reader source: untyped
 
-    attr_reader service_message: untyped
+    attr_reader service_message: string?
 
-    def initialize: (untyped msg, untyped status, ?untyped? source, ?untyped? service_message) -> void
+    def initialize: (string? msg, int? status, ?untyped? source, ?untyped? service_message) -> void
   end
 end

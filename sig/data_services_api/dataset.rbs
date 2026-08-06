@@ -1,7 +1,7 @@
 module DataServicesApi
   # Encapsulates a single dataset from the data services API
   class Dataset
-    @json: untyped
+    @json: json_hash
 
     @service: untyped
 
@@ -9,17 +9,17 @@ module DataServicesApi
 
     attr_reader service: untyped
 
-    def initialize: (untyped json, untyped service) -> void
+    def initialize: (json_hash json, untyped service) -> void
 
-    def id: () -> untyped
+    def id: () -> uri
 
     def method_missing: (untyped attribute) -> untyped
 
-    def respond_to_missing?: (untyped attribute, ?untyped? _args) -> untyped
+    def respond_to_missing?: (untyped attribute, ?untyped? _args) -> bool
 
     def data_api: () -> untyped
 
-    def dataset: () -> untyped
+    def dataset: () -> Dataset
 
     def structure_api: () -> untyped
 

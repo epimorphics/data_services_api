@@ -7,9 +7,9 @@ module DataServicesApi
 
     @faraday_logger_options: untyped
 
-    @url: untyped
+    @url: uri
 
-    @connection_timeout: untyped
+    @connection_timeout: int
 
     @connection_failed_retry_options: untyped
 
@@ -29,18 +29,18 @@ module DataServicesApi
 
     def initialize: (?::Hash[untyped, untyped] config) -> void
 
-    def datasets: () -> untyped
+    def datasets: () -> Array[Dataset]
 
-    def dataset: (untyped name) -> untyped
+    def dataset: (untyped name) -> Dataset
 
-    def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> untyped
+    def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> json_value
 
-    def api_post_json: (untyped api, untyped json) -> untyped
+    def api_post_json: (untyped api, untyped json) -> json_value
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json: (untyped http_url, untyped params, untyped options) -> untyped
+    def get_json: (untyped http_url, untyped params, untyped options) -> json_value
 
     def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options) -> untyped
 

@@ -1,0 +1,4 @@
+type uri = string
+type json_value =
+  String | Integer | Float | TrueClass | FalseClass | NilClass | Array[json_value] | Hash[string, json_value] | uri
+type json_hash = Hash[string, json_value]
