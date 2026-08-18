@@ -243,6 +243,8 @@ configured `instrumenter`:
   other event below - it's the raw `Faraday::Env` for the request (read
   fields via its own accessors, e.g. `env.method`, `env.url`), so a
   subscriber to this event needs different handling than the rest.
+- **`request.data_services_api`** - fires immediately before a request is
+  sent (both GET and POST), regardless of how it later resolves.
 - **`response.data_services_api`** - fires for every response that doesn't
   raise (both GET and POST).
 - **`connection_failure.data_services_api`** - a network-level failure
@@ -259,18 +261,18 @@ configured `instrumenter`:
 Payload fields, by event (fields are Hash keys except where noted; `-` means
 the event doesn't include that field):
 
-| Field | Type | requests<sup>†</sup> | response | connection_failure | service_exception | retry |
-|---|---|---|---|---|---|---|
-| `response` | `Faraday::Response` | - | ✓ | - | - | - |
-| `exception` | see note | - | - | `Faraday::TimeoutError`/`ConnectionFailed` | `ServiceException` | see note |
-| `path` | `String` (bare path, no scheme/host/query) | - | -<sup>‡</sup> | ✓ | ✓ | ✓ |
-| `query_string` | `String`, nilable<sup>§</sup> | - | -<sup>‡</sup> | ✓ | ✓ | - |
-| `method` | `String`, upcased | - | -<sup>‡</sup> | - | - | ✓ |
-| `status` | `Integer`, nilable | - | -<sup>‡</sup> | always `503` | nilable<sup>¶</sup> | - |
-| `duration` | `Integer`, **milliseconds** | - | ✓ | ✓ | ✓ | - |
-| `will_retry_in` | `Float`, **seconds** | - | - | - | - | ✓ |
-| `retry_count` | `Integer`, 1-indexed | - | - | - | - | ✓ |
-| `returned_rows` | `Integer`, nilable | - | -<sup>‡</sup> | - | - | - |
+| Field | Type | requests<sup>†</sup> | request | response | connection_failure | service_exception | retry |
+|---|---|---|---|---|---|---|---|
+| `response` | `Faraday::Response` | - | - | ✓ | - | - | - |
+| `exception` | see note | - | - | - | `Faraday::TimeoutError`/`ConnectionFailed` | `ServiceException` | see note |
+| `path` | `String` (bare path, no scheme/host/query) | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | ✓ |
+| `query_string` | `String`, nilable<sup>§</sup> | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | - |
+| `method` | `String`, upcased | - | ✓ | -<sup>‡</sup> | - | - | ✓ |
+| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | always `503` | nilable<sup>¶</sup> | - |
+| `duration` | `Integer`, **milliseconds** | - | - | ✓ | ✓ | ✓ | - |
+| `will_retry_in` | `Float`, **seconds** | - | - | - | - | - | ✓ |
+| `retry_count` | `Integer`, 1-indexed | - | - | - | - | - | ✓ |
+| `returned_rows` | `Integer`, nilable | - | - | -<sup>‡</sup> | - | - | - |
 
 <sup>†</sup> `requests.data_services_api`'s payload is a `Faraday::Env`, not a
 Hash - none of these field names apply; see above.<br>
