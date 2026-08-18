@@ -130,6 +130,34 @@ describe 'DataServicesAPI::Service' do
     _(datasets.first).must_be_instance_of(DataServicesApi::Dataset)
   end
 
+  it 'should instrument a request before it is sent' do
+    mock_notifier = MockNotifications.new
+
+    DataServicesApi::Service
+      .new(url: api_url, instrumenter: mock_notifier)
+      .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
+
+    _, payload = mock_notifier.instrumentations.find { |name, _| name == 'request.data_services_api' }
+    _(payload).wont_be_nil
+    _(payload[:method]).must_equal 'GET'
+    _(payload[:path]).must_equal '/landregistry/id/ukhpi'
+    _(payload[:query_string]).must_equal '_limit=1'
+  end
+
+  it 'should instrument a request even when the connection subsequently fails' do
+    mock_api_url = 'http://localhost:8765'
+    mock_notifier = MockNotifications.new
+
+    _ do
+      DataServicesApi::Service
+        .new(url: mock_api_url, instrumenter: mock_notifier)
+        .api_get_json("#{mock_api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
+    end.must_raise
+
+    event_names = mock_notifier.instrumentations.map(&:first)
+    _(event_names).must_include 'request.data_services_api'
+  end
+
   it 'should instrument each retry attempt before giving up on a failed connection' do
     mock_api_url = 'http://localhost:8765'
     mock_notifier = MockNotifications.new

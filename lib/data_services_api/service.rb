@@ -83,7 +83,7 @@ module DataServicesApi
     def get_from_api(http_url, accept_headers, params, options)
       query_params = params.merge(options)
 
-      perform_request(http_url, query_params) do |conn|
+      perform_request(http_url, 'GET', query_params) do |conn|
         conn.get do |req|
           req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
           req.headers['Accept'] = accept_headers
@@ -98,7 +98,7 @@ module DataServicesApi
     end
 
     def post_to_api(http_url, json)
-      perform_request(http_url) do |conn|
+      perform_request(http_url, 'POST') do |conn|
         conn.post do |req|
           req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
           req.headers['Accept'] = 'application/json'
@@ -113,7 +113,9 @@ module DataServicesApi
     # returns an error status or unparseable body. query_params, when given, is only used
     # to report the query string on connection/service failures (a successful response
     # reports its own resolved query string from the Faraday response itself)
-    def perform_request(http_url, query_params = nil) # rubocop:disable Metrics/MethodLength
+    def perform_request(http_url, method, query_params = nil) # rubocop:disable Metrics/MethodLength
+      instrument_request(http_url, method, query_params)
+
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = create_http_connection(http_url)
 
@@ -210,6 +212,19 @@ module DataServicesApi
         'response.data_services_api',
         response:,
         duration: elapsed_time
+      )
+    end
+
+    # Fires 'request.data_services_api' immediately before a request is sent.
+    # Payload: path (String, no scheme/host/query), method (String, upcased),
+    # and query_string (String or nil - nil for POST requests, which never pass
+    # query_params, and for GET requests with no params).
+    def instrument_request(http_url, method, query_params)
+      instrumenter&.instrument(
+        'request.data_services_api',
+        path: URI.parse(http_url).path,
+        method:,
+        query_string: query_params && URI.encode_www_form(query_params)
       )
     end
 
