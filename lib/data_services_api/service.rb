@@ -48,10 +48,6 @@ module DataServicesApi
       )
     end
 
-    def datasets
-      api_get_json('/dataset', {}).map { |json| Dataset.new(json, self) }
-    end
-
     def dataset(name)
       raise 'Dataset name is required' unless name
 
@@ -59,8 +55,7 @@ module DataServicesApi
       endpoint = {
         'data-api' => data_api,
         'dataset' => name,
-        'structure-api' => "#{data_api}/structure",
-        'describe-api' => "#{data_api}/describe"
+        'structure-api' => "#{data_api}/structure"
       }
       Dataset.new(endpoint, self)
     end

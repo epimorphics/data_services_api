@@ -122,14 +122,6 @@ describe 'DataServicesAPI::Service' do
     _(payload[:duration]).must_be :>, 0
   end
 
-  it 'should return a list of defined datasets' do
-    skip('this endpoint doesn\'t exist')
-    datasets = @service.datasets
-
-    _(datasets.size).must_be :>, 0
-    _(datasets.first).must_be_instance_of(DataServicesApi::Dataset)
-  end
-
   it 'should instrument a request before it is sent' do
     mock_notifier = MockNotifications.new
 

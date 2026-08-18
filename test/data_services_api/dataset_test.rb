@@ -64,19 +64,4 @@ describe 'DataServiceApi::Dataset' do
     _(json).wont_be_nil
     _(json.size).must_be :>, 0
   end
-
-  it 'should describe its own structure as a set of aspects' do
-    skip('this endpoint doesn\'t exist')
-    aspects = @dataset.structure
-
-    _(aspects).wont_be_empty
-    _(aspects.first).must_be_instance_of(DataServicesApi::Aspect)
-  end
-
-  it 'should accept a URI and return an RDF description' do
-    skip('this endpoint doesn\'t exist')
-    description = @dataset.describe('http://landregistry.data.gov.uk/id/region/south-east')
-
-    _(description).wont_be_nil
-  end
 end
