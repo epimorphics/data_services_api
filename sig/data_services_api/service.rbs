@@ -53,7 +53,7 @@ module DataServicesApi
     # returns an error status or unparseable body. query_params, when given, is only used
     # to report the query string on connection/service failures (a successful response
     # reports its own resolved query string from the Faraday response itself)
-    def perform_request: (untyped http_url, ?untyped? query_params) { (untyped) -> untyped } -> untyped
+    def perform_request: (untyped http_url, untyped method, ?untyped? query_params) { (untyped) -> untyped } -> untyped
 
     def create_http_connection: (untyped http_url) -> untyped
 
@@ -70,6 +70,12 @@ module DataServicesApi
     # it would be the synthetic Faraday::RetriableResponse if a status-code-based
     # retry_statuses: were ever configured, which this gem doesn't set today.
     def instrument_retry: (untyped env, untyped retry_count, untyped exception, untyped will_retry_in) -> untyped
+
+    # Fires 'request.data_services_api' immediately before a request is sent, with
+    # path (String), method (String), and query_string (String or nil - nil for
+    # POST requests, which never pass query_params, and for GET requests with
+    # no params).
+    def instrument_request: (untyped http_url, untyped method, untyped query_params) -> untyped
 
     def as_http_api: (untyped api) -> untyped
 
