@@ -7,6 +7,7 @@ AllCops:
   Exclude:
     - config/unicorn.rb
     - db/**
+    - vendor/**/*
   NewCops: enable
 
 Layout/LineLength:
