@@ -131,7 +131,6 @@ describe 'DataServicesAPI::Service' do
 
     _, payload = mock_notifier.instrumentations.find { |name, _| name == 'request.data_services_api' }
     _(payload).wont_be_nil
-    _(payload[:method]).must_equal 'GET'
     _(payload[:path]).must_equal '/landregistry/id/ukhpi'
     _(payload[:query_string]).must_equal '_limit=1'
   end

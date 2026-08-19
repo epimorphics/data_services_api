@@ -244,9 +244,9 @@ configured `instrumenter`:
   fields via its own accessors, e.g. `env.method`, `env.url`), so a
   subscriber to this event needs different handling than the rest.
 - **`request.data_services_api`** - fires immediately before a request is
-  sent (both GET and POST), regardless of how it later resolves.
+  sent, regardless of how it later resolves.
 - **`response.data_services_api`** - fires for every response that doesn't
-  raise (both GET and POST).
+  raise.
 - **`connection_failure.data_services_api`** - a network-level failure
   (timeout or refused connection), after retries are exhausted. The request
   never got a response at all.
@@ -267,7 +267,7 @@ the event doesn't include that field):
 | `exception` | see note | - | - | - | `Faraday::TimeoutError`/`ConnectionFailed` | `ServiceException` | see note |
 | `path` | `String` (bare path, no scheme/host/query) | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | ✓ |
 | `query_string` | `String`, nilable<sup>§</sup> | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | - |
-| `method` | `String`, upcased | - | ✓ | -<sup>‡</sup> | - | - | ✓ |
+| `method` | `String`, upcased | - | - | -<sup>‡</sup> | - | - | ✓ |
 | `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | always `503` | nilable<sup>¶</sup> | - |
 | `duration` | `Integer`, **milliseconds** | - | - | ✓ | ✓ | ✓ | - |
 | `will_retry_in` | `Float`, **seconds** | - | - | - | - | - | ✓ |
@@ -279,8 +279,7 @@ Hash - none of these field names apply; see above.<br>
 <sup>‡</sup> derivable from the `response:`/`exception:` object already in
 the payload rather than duplicated as a separate field - see the code
 examples below.<br>
-<sup>§</sup> `nil` for POST requests (which never have query params) and for
-GET requests with no params.<br>
+<sup>§</sup> `nil` for GET requests with no params.<br>
 <sup>¶</sup> `nil` if Faraday never associated a response with the error
 (`Faraday::Error#response_status` returns `nil` in that case - can happen
 for some `Faraday::ParsingError`s).

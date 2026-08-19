@@ -64,10 +64,6 @@ module DataServicesApi
       get_json(as_http_api(api), params, options)
     end
 
-    def api_post_json(api, json)
-      post_json(as_http_api(api), json)
-    end
-
     private
 
     # Get parsed JSON from the given URL
@@ -78,7 +74,7 @@ module DataServicesApi
     def get_from_api(http_url, accept_headers, params, options)
       query_params = params.merge(options)
 
-      perform_request(http_url, 'GET', query_params) do |conn|
+      perform_request(http_url, query_params) do |conn|
         conn.get do |req|
           req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
           req.headers['Accept'] = accept_headers
@@ -88,28 +84,14 @@ module DataServicesApi
       end
     end
 
-    def post_json(http_url, json)
-      post_to_api(http_url, json).body
-    end
-
-    def post_to_api(http_url, json)
-      perform_request(http_url, 'POST') do |conn|
-        conn.post do |req|
-          req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
-          req.headers['Accept'] = 'application/json'
-          req.headers['Content-Type'] = 'application/json'
-          req.body = json
-        end
-      end
-    end
-
-    # Perform an HTTP request against http_url, timing and instrumenting it consistently
-    # regardless of whether it succeeds, times out, fails to connect, or the remote API
-    # returns an error status or unparseable body. query_params, when given, is only used
-    # to report the query string on connection/service failures (a successful response
-    # reports its own resolved query string from the Faraday response itself)
-    def perform_request(http_url, method, query_params = nil) # rubocop:disable Metrics/MethodLength
-      instrument_request(http_url, method, query_params)
+    # Perform an HTTP GET request against http_url, timing and instrumenting it
+    # consistently regardless of whether it succeeds, times out, fails to connect,
+    # or the remote API returns an error status or unparseable body. query_params
+    # is only used to report the query string on connection/service failures (a
+    # successful response reports its own resolved query string from the Faraday
+    # response itself)
+    def perform_request(http_url, query_params) # rubocop:disable Metrics/MethodLength
+      instrument_request(http_url, query_params)
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = create_http_connection(http_url)
@@ -211,14 +193,12 @@ module DataServicesApi
     end
 
     # Fires 'request.data_services_api' immediately before a request is sent.
-    # Payload: path (String, no scheme/host/query), method (String, upcased),
-    # and query_string (String or nil - nil for POST requests, which never pass
-    # query_params, and for GET requests with no params).
-    def instrument_request(http_url, method, query_params)
+    # Payload: path (String, no scheme/host/query) and query_string (String or
+    # nil - nil for GET requests with no params).
+    def instrument_request(http_url, query_params)
       instrumenter&.instrument(
         'request.data_services_api',
         path: URI.parse(http_url).path,
-        method:,
         query_string: query_params && URI.encode_www_form(query_params)
       )
     end
@@ -227,10 +207,9 @@ module DataServicesApi
     # (after retries are exhausted): the request never got a response at all.
     # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
     # (String, no scheme/host/query), query_string (String or nil - nil for
-    # POST requests, which never pass query_params, and for GET requests with
-    # no params), duration (Integer milliseconds, see #instrument_response),
-    # and status (always the literal 503 - a fixed value, not derived from any
-    # actual response, since none was received).
+    # GET requests with no params), duration (Integer milliseconds, see
+    # #instrument_response), and status (always the literal 503 - a fixed
+    # value, not derived from any actual response, since none was received).
     def instrument_connection_failure(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'connection_failure.data_services_api',

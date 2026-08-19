@@ -108,6 +108,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retry/timeout options
 - Extracted the duplicated request-timing/instrumentation/rescue logic in
   `get_from_api`/`post_to_api` into a shared `perform_request` helper
+- **Breaking**: Removed POST support (`Service#api_post_json`/`post_json`/
+  `post_to_api`). Confirmed unused by both consuming apps (`ppd-explorer`,
+  `ukhpi`); GET is the only HTTP method the gem now sends, so `method` is no
+  longer part of `request.data_services_api`'s payload
 
 ## 1.7.0 - 2026-07-13
 

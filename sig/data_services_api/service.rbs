@@ -29,13 +29,9 @@ module DataServicesApi
 
     def initialize: (?::Hash[untyped, untyped] config) -> void
 
-    def datasets: () -> Array[Dataset]
-
     def dataset: (untyped name) -> Dataset
 
     def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> json_value
-
-    def api_post_json: (untyped api, untyped json) -> json_value
 
     private
 
@@ -44,16 +40,13 @@ module DataServicesApi
 
     def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options) -> untyped
 
-    def post_json: (untyped http_url, untyped json) -> untyped
-
-    def post_to_api: (untyped http_url, untyped json) -> untyped
-
-    # Perform an HTTP request against http_url, timing and instrumenting it consistently
-    # regardless of whether it succeeds, times out, fails to connect, or the remote API
-    # returns an error status or unparseable body. query_params, when given, is only used
-    # to report the query string on connection/service failures (a successful response
-    # reports its own resolved query string from the Faraday response itself)
-    def perform_request: (untyped http_url, untyped method, ?untyped? query_params) { (untyped) -> untyped } -> untyped
+    # Perform an HTTP GET request against http_url, timing and instrumenting it
+    # consistently regardless of whether it succeeds, times out, fails to connect,
+    # or the remote API returns an error status or unparseable body. query_params
+    # is only used to report the query string on connection/service failures (a
+    # successful response reports its own resolved query string from the Faraday
+    # response itself)
+    def perform_request: (untyped http_url, untyped query_params) { (untyped) -> untyped } -> untyped
 
     def create_http_connection: (untyped http_url) -> untyped
 
@@ -72,10 +65,9 @@ module DataServicesApi
     def instrument_retry: (untyped env, untyped retry_count, untyped exception, untyped will_retry_in) -> untyped
 
     # Fires 'request.data_services_api' immediately before a request is sent, with
-    # path (String), method (String), and query_string (String or nil - nil for
-    # POST requests, which never pass query_params, and for GET requests with
+    # path (String) and query_string (String or nil - nil for GET requests with
     # no params).
-    def instrument_request: (untyped http_url, untyped method, untyped query_params) -> untyped
+    def instrument_request: (untyped http_url, untyped query_params) -> untyped
 
     def as_http_api: (untyped api) -> untyped
 
@@ -90,8 +82,7 @@ module DataServicesApi
     # (after retries are exhausted): the request never got a response at all.
     # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
     # (String, no scheme/host/query), query_string (String or nil - nil for
-    # POST requests, which never pass query_params, and for GET requests with
-    # no params), duration (Integer milliseconds, see #instrument_response),
+    # GET requests with no params), duration (Integer milliseconds, see #instrument_response),
     # and status (always the literal 503 - a fixed value, not derived from any
     # actual response, since none was received).
     def instrument_connection_failure: (untyped http_url, untyped query_params, untyped exception, untyped start_time) -> untyped
