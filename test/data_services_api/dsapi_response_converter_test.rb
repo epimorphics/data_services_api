@@ -77,12 +77,14 @@ describe 'DataServicesApi::DSAPIResponseConverter' do
     it 'should convert some SAPINT json to DSAPI format' do
       actual_response = ppd_resp_conv.send(:to_dsapi_json, 'newBuild', ppd_sapint_items[0]['newBuild'])
       expected_response = { 'ppd:newBuild' => ppd_dsapi_items[0]['ppd:newBuild'] }
+
       _(actual_response).must_equal expected_response
     end
 
     it 'should convert SAPINT hash to DSAPI format' do
       actual_response = ppd_resp_conv.send(:to_dsapi_json, 'propertyAddress', 'county' => 'SOMERSET')
       expected_response = { 'ppd:propertyAddressCounty' => 'SOMERSET' }
+
       _(actual_response).must_equal expected_response
     end
   end
@@ -341,12 +343,14 @@ describe 'DataServicesApi::DSAPIResponseConverter' do
     it 'should convert some SAPINT json to DSAPI format' do
       actual_response = ukhpi_resp_conv.send(:to_dsapi_json, 'averagePrice', ukhpi_sapint_items[0]['averagePrice'])
       expected_response = { 'ukhpi:averagePrice' => ukhpi_dsapi_items[0]['ukhpi:averagePrice'] }
+
       _(actual_response).must_equal expected_response
     end
 
     it 'should convert SAPINT hash to DSAPI format' do
       actual_response = ukhpi_resp_conv.send(:to_dsapi_json, 'refRegion', '@id' => 'http://landregistry.data.gov.uk/id/region/redcar-and-cleveland')
       expected_response = { 'ukhpi:refRegion' => { '@id' => 'http://landregistry.data.gov.uk/id/region/redcar-and-cleveland' } }
+
       _(actual_response).must_equal expected_response
     end
   end

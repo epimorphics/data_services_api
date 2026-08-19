@@ -33,11 +33,13 @@ describe 'DataServicesAPI::Service' do
   it 'should return the service URL' do
     mock_notifier = MockNotifications.new
     service = DataServicesApi::Service.new(url: 'https://wimbledon.com', instrumenter: mock_notifier)
+
     _(service.url).must_equal('https://wimbledon.com')
   end
 
   it 'should find a dataset by name' do
     dataset = @service.dataset('ukhpi')
+
     _(dataset.data_api).must_match %r{/landregistry/id/ukhpi}
   end
 
@@ -52,6 +54,7 @@ describe 'DataServicesAPI::Service' do
 
     service = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier)
     json = service.api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
+
     _(json).wont_be_nil
     _(json['meta']).wont_be_nil
   end
@@ -64,6 +67,7 @@ describe 'DataServicesAPI::Service' do
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
     event_names = mock_notifier.instrumentations.map(&:first)
+
     _(event_names).must_include 'response.data_services_api'
   end
 
@@ -78,6 +82,7 @@ describe 'DataServicesAPI::Service' do
     end.must_raise
 
     event_names = mock_notifier.instrumentations.map(&:first)
+
     _(event_names).must_include 'connection_failure.data_services_api'
   end
 
@@ -93,6 +98,7 @@ describe 'DataServicesAPI::Service' do
     _(error.status).must_equal 404
 
     _, payload = mock_notifier.instrumentations.find { |n, _| n == 'service_exception.data_services_api' }
+
     _(payload).wont_be_nil
     _(payload[:status]).must_equal 404
     _(payload[:query_string]).must_equal '_limit=1'
@@ -106,6 +112,7 @@ describe 'DataServicesAPI::Service' do
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
     _, payload = mock_notifier.instrumentations.find { |name, _| name == 'response.data_services_api' }
+
     _(payload).wont_be_nil
     _(payload[:response].body['items']).wont_be_nil
   end
@@ -118,6 +125,7 @@ describe 'DataServicesAPI::Service' do
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
     _, payload = mock_notifier.instrumentations.find { |name, _| name == 'response.data_services_api' }
+
     _(payload).wont_be_nil
     _(payload[:duration]).must_be :>, 0
   end
@@ -130,6 +138,7 @@ describe 'DataServicesAPI::Service' do
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
 
     _, payload = mock_notifier.instrumentations.find { |name, _| name == 'request.data_services_api' }
+
     _(payload).wont_be_nil
     _(payload[:path]).must_equal '/landregistry/id/ukhpi'
     _(payload[:query_string]).must_equal '_limit=1'
@@ -146,6 +155,7 @@ describe 'DataServicesAPI::Service' do
     end.must_raise
 
     event_names = mock_notifier.instrumentations.map(&:first)
+
     _(event_names).must_include 'request.data_services_api'
   end
 
@@ -161,6 +171,7 @@ describe 'DataServicesAPI::Service' do
     end.must_raise
 
     retries = mock_notifier.instrumentations.select { |entry| entry.first == 'retry.data_services_api' }
+
     _(retries.size).must_equal 2
     _(retries.map { |_, payload| payload[:retry_count] }).must_equal [1, 2]
   end

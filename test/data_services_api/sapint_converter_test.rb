@@ -76,6 +76,7 @@ describe 'DataServicesApi::SapiNTConverter' do
 
   it 'should convert DSAPI and to SAPINT format' do
     and_json = JSON.parse(dsapi_query)['@and']
+
     _(sapi_conv.send(:and_list, and_json)).must_equal(
       sapint_query.map do |key, value|
         [key, value] unless %w[_count _limit].include?(key)
