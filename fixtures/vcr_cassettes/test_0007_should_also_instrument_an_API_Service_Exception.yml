@@ -30,16 +30,16 @@ http_interactions:
       Content-Length:
       - '183'
       Date:
-      - Thu, 06 Aug 2026 08:24:45 GMT
+      - Fri, 21 Aug 2026 15:38:39 GMT
     body:
       encoding: UTF-8
       string: |-
         {
-          "timestamp" : "Thu Aug 06 08:24:45 GMT 2026",
+          "timestamp" : "Fri Aug 21 15:38:39 GMT 2026",
           "status" : "404",
           "error" : "Not Found",
           "message" : "Requested endpoint doesn't exist",
           "path" : "/ceci/nest/pas/une/page"
         }
-  recorded_at: Thu, 06 Aug 2026 08:24:45 GMT
+  recorded_at: Fri, 21 Aug 2026 15:38:39 GMT
 recorded_with: VCR 6.3.1
