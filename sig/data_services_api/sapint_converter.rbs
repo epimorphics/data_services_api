@@ -1,0 +1,42 @@
+module DataServicesApi
+  # Transformer to convert queries using the DsAPI query DSL
+  # into an equivalent SapiNT query URL string
+  class SapiNTConverter
+    @dsapi_query: untyped
+
+    def initialize: (untyped dsapi_query) -> void
+
+    # Converts a DSAPI query to SAPINT query
+    def to_sapint_query: () -> untyped
+
+    private
+
+    def sapint_query: (untyped key, untyped value) -> untyped
+
+    def sort: (untyped values) -> untyped
+
+    def count: (untyped value) -> ({ "_count" => "@id" } | nil)
+
+    def limit: (untyped value) -> { "_limit" => untyped }
+
+    def offset: (untyped value) -> { "_offset" => untyped }
+
+    def and_list: (untyped list) -> untyped
+
+    def and_item: (untyped json_item) -> untyped
+
+    def relation: (untyped relation, untyped attribute, untyped json) -> untyped
+
+    def eq: (untyped attribute, untyped value) -> ::Hash[untyped, untyped]
+
+    def oneof: (untyped attribute, untyped values) -> untyped
+
+    def comparison: (untyped prefix, untyped attribute, untyped value) -> ::Hash[::String, untyped]
+
+    def search: (untyped attribute, untyped value) -> ::Hash["searchPath" | ::String, untyped]
+
+    def sanitize_search: (untyped search_text) -> untyped
+
+    def remove_prefix: (untyped value) -> untyped
+  end
+end

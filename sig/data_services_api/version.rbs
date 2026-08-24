@@ -1,0 +1,8 @@
+# :nodoc:
+module DataServicesApi
+  MAJOR: int
+  MINOR: int
+  PATCH: int
+  SUFFIX: string?
+  VERSION: ::String
+end

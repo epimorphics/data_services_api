@@ -18,7 +18,10 @@ group :development, :test do
   gem 'ostruct'
   gem 'rake'
   gem 'rubocop'
+  gem 'rubocop-minitest', require: false
+  gem 'rubocop-rake', require: false
   gem 'simplecov', require: false
+  gem 'steep', require: false
   gem 'vcr'
   gem 'webmock'
 end

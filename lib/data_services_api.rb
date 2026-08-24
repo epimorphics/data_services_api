@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# require "yajl"
-
 require 'data_services_api/version'
 require 'data_services_api/service'
 require 'data_services_api/dataset'

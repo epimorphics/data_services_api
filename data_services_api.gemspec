@@ -13,7 +13,8 @@ Gem::Specification.new do |spec|
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 3.4'
 
-  spec.files         = Dir.glob('lib/**/*', File::FNM_DOTMATCH) + ['LICENSE.txt', 'README.md']
+  spec.files         = Dir.glob('{lib/**/*,sig/**/*.rbs}',
+                                File::FNM_DOTMATCH) + ['LICENSE.txt', 'README.md']
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.extra_rdoc_files = Dir['README.md', 'CHANGELOG.md', 'LICENSE.txt']
   spec.require_paths = ['lib']
@@ -27,9 +28,7 @@ Gem::Specification.new do |spec|
   }
 
   spec.add_dependency 'faraday', '~> 2.13', '>= 2.13.0'
-  spec.add_dependency 'faraday-encoding', '~> 0.0', '>= 0.0.6'
   spec.add_dependency 'faraday-follow_redirects', '~> 0.4', '>= 0.4.0'
   spec.add_dependency 'faraday-retry', '~> 2.0', '>= 2.0'
   spec.add_dependency 'json', '~> 2.0'
-  spec.add_dependency 'yajl-ruby', '~> 1.4'
 end

@@ -7,6 +7,112 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.0.0
+
+### Documentation
+
+- Documented the exact payload shape of every notification event: added a
+  plain-prose comment above each `instrument_*` method in `service.rb`
+  describing its payload. Writing this down surfaced several undocumented 
+  inconsistencies that are noted explicitly rather than fixed: 
+  `requests.data_services_api`'s payload is a raw `Faraday::Env`, not a
+  Hash like every other event; `duration` (milliseconds, `Integer`) and 
+  `will_retry_in` (seconds, `Float`) describe similar things in different
+  units; `path` is a bare `String` on most events but only derivable from
+  a `URI` object via `response:` on `response.data_services_api`;
+  `status` can be `nil` on `service_exception.data_services_api`;
+   `query_string` is always `nil` for POST-triggered failures
+
+### Changed
+
+- **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
+  `Faraday::ServerError`/`Faraday::ParsingError` (any 4xx/5xx status, or an
+  unparseable response body) are no longer raised directly to callers.
+  They're now always wrapped in `DataServicesApi::ServiceException` before
+  being raised, restoring the exception contract that consuming
+  applications were already written against (`e.service_message`, `e.status`)
+  but that this gem had stopped actually providing
+- Fixed `ServiceException#service_message`, which always returned `nil` due
+  to a typo (`initialize` assigned `@service_msg` instead of `@service_message`)
+- `service_exception.data_services_api` now fires for this whole class of
+  failure (previously only `Faraday::ResourceNotFound`/404), and its
+  `query_string` field is now populated correctly from the actual request
+  params instead of always being `nil`
+- Added a `retry.data_services_api` notification, fired immediately before
+  each retry attempt on a network failure, with `path`, `method`,
+  `retry_count`, `exception`, and `will_retry_in`
+- Fixed `Dataset#structure` and `Dataset#describe`, which always raised
+  (`ArgumentError` or `NoMethodError` on `nil`) for any `Dataset` obtained the
+  normal way via `Service#dataset(name)`. That method only ever populated
+  `data-api`/`dataset` in the JSON it hands to `Dataset`, never
+  `structure-api`/`describe-api`, so `structure_api`/`describe_api` were
+  always `nil`. Both are now derived from `data-api` the same way the real
+  `/dataset` listing endpoint returns them (`<data-api>/structure`,
+  `<data-api>/describe`). `Dataset#structure` also called `api_get_json`
+  with a missing required argument, the same class of bug as `Service#datasets`
+- **Breaking**: `Service` no longer does any logging of its own. The `logger:`
+  config option has been removed, along with the automatic `Rails.logger`
+  wiring, the `puts` debug line, and all `logger.info`/`error`/etc calls.
+  Consuming applications should subscribe to the gem's
+  `ActiveSupport::Notifications` events instead and log whatever they need,
+  at whatever level and format they choose
+- **Breaking**: instrumentation event names are now namespaced under
+  `data_services_api` instead of the generic, collision-prone `.api` suffix:
+  `requests.api` -> `requests.data_services_api`,
+  `response.api` -> `response.data_services_api`,
+  `connection_failure.api` -> `connection_failure.data_services_api`,
+  `service_exception.api` -> `service_exception.data_services_api`. Fields
+  that used to only be visible in the removed log output (request path,
+  method, status, returned row count) are all derivable by subscribers from
+  the `Faraday::Response` object already included in `response.data_services_api`'s
+  payload, so they aren't duplicated as separate event fields
+- **Breaking**: Faraday's built-in request/response logging middleware is no
+  longer enabled automatically in Rails. It's now opt-in via
+  `Service.new(faraday_logger:)`, passing a logger object to hand to Faraday.
+  When enabled, it still defaults to logging at `debug` level with headers/
+  bodies/errors off (matching the old always-on behaviour), configurable via
+  `Service.new(faraday_logger_options:)`
+- Fixed a bug where `service_exception.api`/`connection_failure.api` were
+  never logged outside of a Rails environment; the new notification events
+  fire consistently regardless of environment
+- Fixed a `NameError` (`RACK::Exception` instead of `Rack::Exception`) in the
+  service-exception error path that would raise whenever a `Faraday::ResourceNotFound`
+  without a `status` reached it
+- Removed the `yajl-ruby` dependency and the `Service#parser`/`parse_json`
+  machinery built on it. Response bodies are already parsed to Ruby
+  Hash/Array by Faraday's own `:json` response middleware; the removed code
+  was re-serializing that result back to a JSON string and parsing it a
+  second time with Yajl for no benefit. This also fixes the gem being broken
+  out of the box for any consumer that didn't separately `require 'yajl'`
+  themselves, since this gem's own `require "yajl"` had been commented out
+- Removed the unused `faraday-encoding` dependency; nothing in the gem
+  configures Faraday's `:encoding` middleware
+- Fixed `Service#datasets`, which always raised `ArgumentError` (it called
+  `api_get_json` with a missing required argument). Confirmed unused by
+  every consuming app currently on this gem, which explains why it went
+  unnoticed
+- Fixed `Service#as_http_api`, which raised `URI::InvalidComponentError`
+  whenever `url:` was configured with a scheme (exactly as the README's own
+  usage example shows) and a relative path was passed to `api_get_json`/
+  `api_post_json`. Also unused by any current consumer, since all existing
+  calls happen to pass a full URL rather than a relative path
+- Removed `Service#ok?`, which was unreachable in practice (Faraday's
+  `raise_error` middleware already raises on all 4xx/5xx before `ok?` could
+  run) and would have raised a `TypeError` itself if it ever did run, since
+  `response.body` is already a parsed Hash by that point, not a JSON string
+- Removed the dead, non-functional `auth` parameter from the private
+  `create_http_connection`; no caller passed `auth: true`, and the
+  `api_user`/`api_pw` methods it referenced don't exist
+- Added a `connection_timeout` config option (defaulting to the previous
+  hardcoded `600` seconds) for consistency with the other configurable
+  retry/timeout options
+- Extracted the duplicated request-timing/instrumentation/rescue logic in
+  `get_from_api`/`post_to_api` into a shared `perform_request` helper
+- **Breaking**: Removed POST support (`Service#api_post_json`/`post_json`/
+  `post_to_api`). Confirmed unused by both consuming apps (`ppd-explorer`,
+  `ukhpi`); GET is the only HTTP method the gem now sends, so `method` is no
+  longer part of `request.data_services_api`'s payload
+
 ## 1.7.0 - 2026-07-13
 
 ### Added

@@ -1,0 +1,60 @@
+module DataServicesApi
+  # Generate Data Service API queries, and serialize as JSON
+  class QueryGenerator
+    @terms: untyped
+
+    OPERATIONS: ::Array["@eq" | "@ge" | "@gt" | "@le" | "@lt"]
+
+    attr_reader terms: untyped
+
+    def initialize: (?untyped? initial_terms) -> void
+
+    def to_json: (*untyped _args) -> untyped
+
+    def compact_json: () -> untyped
+
+    def eq: (untyped attribute, untyped value) -> untyped
+
+    def eq_any_uri: (untyped attribute, untyped uris, ?::Hash[untyped, untyped] options) -> untyped
+
+    def eq_any_value: (untyped attribute, untyped values, ?::Hash[untyped, untyped] options) -> untyped
+
+    def ge: (untyped attribute, untyped value) -> untyped
+
+    def gt: (untyped attribute, untyped value) -> untyped
+
+    def le: (untyped attribute, untyped value) -> untyped
+
+    def lt: (untyped attribute, untyped value) -> untyped
+
+    def op: (untyped oper, untyped attribute, untyped value) -> untyped
+
+    def sort: (untyped up_or_down, untyped attribute) -> untyped
+
+    def search: (untyped pattern) -> untyped
+
+    def search_property: (untyped property, untyped pattern, ?::Hash[untyped, untyped] options) -> untyped
+
+    def search_aspect: (untyped aspect, untyped pattern) -> untyped
+
+    def search_aspect_property: (untyped aspect, untyped property, untyped pattern, ?::Hash[untyped, untyped] options) -> untyped
+
+    def matches: (untyped aspect, untyped pattern, ?::Hash[untyped, untyped] options) -> untyped
+
+    def limit: (untyped lim) -> untyped
+
+    def offset: (untyped num) -> untyped
+
+    def count_only: () -> untyped
+
+    private
+
+    def relational: (untyped rel, untyped attribute, untyped value) -> untyped
+
+    def eq_any: (untyped attribute, untyped values, untyped value_type, untyped options) -> untyped
+
+    def as_typed_value: (untyped value) -> untyped
+
+    def merge_terms: (untyped term) -> untyped
+  end
+end

@@ -13,7 +13,7 @@ module DataServicesApi
 
       @status = status
       @source = source
-      @service_msg = service_message
+      @service_message = service_message
     end
   end
 end

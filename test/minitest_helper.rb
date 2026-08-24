@@ -7,7 +7,6 @@ SimpleCov.start 'test_frameworks' do
   enable_coverage :branch
 end
 
-require 'yajl'
 require 'minitest'
 require 'minitest/autorun'
 
@@ -15,7 +14,6 @@ require 'bundler'
 Bundler.require(:default, :development, :test)
 
 require 'faraday'
-require 'faraday/encoding'
 require 'faraday/follow_redirects'
 require 'faraday/retry'
 

@@ -11,18 +11,7 @@ class MockNotifications
 
   def instrument(*args)
     @instrumentations << args
-  end
-end
-
-class MockLogger
-  attr_reader :messages
-
-  def initialize
-    @messages = Hash.new { |h, k| h[k] = [] }
-  end
-
-  def info(message, &block)
-    @messages[:info] << [message, block&.call]
+    yield if block_given?
   end
 end
 
@@ -31,17 +20,11 @@ describe 'DataServiceApi::Dataset' do
     ENV.fetch('API_SERVICE_URL', 'http://localhost:8888')
   end
 
-  let :mock_logger do
-    MockLogger.new
-  end
-
   before do
     mock_notifier = MockNotifications.new
     VCR.insert_cassette(name, record: :new_episodes)
 
-    mock_logger.expects(:info).at_least(0)
-
-    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier, logger: mock_logger).dataset('ukhpi')
+    @dataset = DataServicesApi::Service.new(url: api_url, instrumenter: mock_notifier).dataset('ukhpi')
   end
 
   after do

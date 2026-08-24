@@ -13,7 +13,7 @@ module DataServicesApi
       @service = service
     end
 
-    def id
+    def id # steep:ignore MethodBodyTypeMismatch
       @json['@id']
     end
 

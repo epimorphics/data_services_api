@@ -1,0 +1,28 @@
+# :nodoc:
+module DataServicesApi
+  # Adapter-pattern to present a response from SapiNT in the same JSON structure
+  # that the old DsAPI was using
+  class DSAPIResponseConverter
+    @sapint_response: untyped
+
+    @dataset_name: untyped
+
+    @json_mode_compact: untyped
+
+    def initialize: (untyped sapint_response, untyped dataset_name, ?bool json_mode_compact) -> void
+
+    # Converts SAPINT returned JSON format to DSAPI returned JSON format
+    def to_dsapi_response: () -> untyped
+
+    private
+
+    def to_dsapi_item: (untyped sapint_item) -> untyped
+
+    # Return different response formats based on the set JSON mode
+    def to_dsapi_json: (untyped sapint_key, untyped sapint_value) -> untyped
+
+    def json_mode_compact: (untyped sapint_key, untyped sapint_value) -> (::Hash[untyped, untyped] | ::Hash[::String, untyped] | untyped)
+
+    def json_mode_complete: (untyped sapint_key, untyped sapint_value) -> (::Hash[untyped, untyped] | ::Hash[::String, { "@value" => untyped }] | ::Hash[::String, ::Array[{ "@value" => untyped }]] | ::Hash[::String, ::Array[untyped]] | ::Hash[::String, untyped])
+  end
+end

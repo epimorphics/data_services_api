@@ -1,8 +1,13 @@
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+
 AllCops:
   TargetRubyVersion: 3.4
   Exclude:
     - config/unicorn.rb
     - db/**
+    - vendor/**/*
   NewCops: enable
 
 Layout/LineLength:

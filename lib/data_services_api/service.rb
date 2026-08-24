@@ -5,7 +5,7 @@ require 'faraday'
 module DataServicesApi
   # Denotes the encapsulated DataServicesAPI service
   class Service # rubocop:disable Metrics/ClassLength
-    attr_reader :instrumenter, :logger, :parser, :url
+    attr_reader :instrumenter, :url
 
     DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS = {
       max: 4,
@@ -23,11 +23,23 @@ module DataServicesApi
       exceptions: [Faraday::TimeoutError]
     }.freeze
 
-    def initialize(config = {})
+    DEFAULT_FARADAY_LOGGER_OPTIONS = {
+      headers: false,
+      bodies: false,
+      errors: false,
+      log_level: :debug
+    }.freeze
+
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS = 600
+
+    def initialize(config = {}) # rubocop:disable Metrics/MethodLength
       @instrumenter = config[:instrumenter] || (in_rails? && ActiveSupport::Notifications)
-      @logger = config[:logger] || (in_rails? && Rails.logger)
-      @parser = Yajl::Parser.new
+      @faraday_logger = config[:faraday_logger]
+      @faraday_logger_options = DEFAULT_FARADAY_LOGGER_OPTIONS.merge(
+        config[:faraday_logger_options] || {}
+      )
       @url = config[:url]
+      @connection_timeout = config[:connection_timeout] || DEFAULT_CONNECTION_TIMEOUT_SECONDS
       @connection_failed_retry_options = DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS.merge(
         config[:connection_failed_retry_options] || {}
       )
@@ -36,16 +48,14 @@ module DataServicesApi
       )
     end
 
-    def datasets
-      api_get_json('/dataset').map { |json| Dataset.new(json, self) }
-    end
-
     def dataset(name)
       raise 'Dataset name is required' unless name
 
+      data_api = "#{@url}/landregistry/id/#{name}"
       endpoint = {
-        'data-api' => "#{@url}/landregistry/id/#{name}",
-        'dataset' => name
+        'data-api' => data_api,
+        'dataset' => name,
+        'structure-api' => "#{data_api}/structure"
       }
       Dataset.new(endpoint, self)
     end
@@ -54,242 +64,182 @@ module DataServicesApi
       get_json(as_http_api(api), params, options)
     end
 
-    def api_post_json(api, json)
-      post_json(as_http_api(api), json)
-    end
-
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      # create a well formatted query string from the params hash to be used in the logging
-      query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
-      # parse out the origin from the URL, this is the host but including protocol and port
-      origin = http_url.split(URI.parse(http_url).path).first
-      # initiate the message to be logged
-      logged_fields = {
-        message: generate_service_message({
-                                            msg: "Calling API: #{origin}",
-                                            timer: nil
-                                          }),
-        path: URI.parse(http_url).path,
-        query_string:,
-        request_status: 'processing'
-      }
-
-      unless logged_fields[:query_string].nil? || logged_fields[:query_string].empty?
-        logged_fields[:path] += "?#{logged_fields[:query_string]}"
-      end
-
-      log_message(logged_fields)
-
-      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      # make the request to the API and get the response immediately
-      response = get_from_api(http_url, 'application/json', params, options)
-      # next, calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      elapsed_time = (Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond) - start_time) / 1000 # rubocop:disable Layout/LineLength
-      # now parse the response
-      response_body = parse_json(response.body)
-      # log the number of rows returned
-      returned_rows = response_body['items'] ? response_body['items'].size : 0
-      # log the response and status code
-      logged_fields[:message] = generate_service_message(
-        {
-          msg: "API returned #{returned_rows} #{returned_rows == 1 ? 'row' : 'rows'}",
-          timer: elapsed_time
-        }
-      )
-
-      logged_fields[:method] = response.env.method.upcase
-      logged_fields[:returned_rows] = returned_rows if returned_rows.positive?
-      logged_fields[:request_status] = 'processing'
-      logged_fields[:request_time] = elapsed_time
-      logged_fields[:status] = response.status
-
-      log_message(logged_fields)
-      response_body
+    def get_json(http_url, params, options)
+      get_from_api(http_url, 'application/json', params, options).body
     end
 
-    def get_from_api(http_url, accept_headers, params, options) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      # immediately log the time the request was sent in microseconds
-      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      conn = set_connection_timeout(create_http_connection(http_url))
+    def get_from_api(http_url, accept_headers, params, options)
+      query_params = params.merge(options)
 
-      response = conn.get do |req|
-        req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
-        req.headers['Accept'] = accept_headers
-        req.options.params_encoder = Faraday::FlatParamsEncoder
-        req.params = params.merge(options)
-      end
-
-      # immediately log the response was received
-      instrument_response(response, start_time, 'received')
-
-      ok?(response, http_url) && response
-    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
-      instrument_connection_failure(http_url, e, start_time)
-      raise e
-    rescue Faraday::ResourceNotFound, ServiceException => e
-      instrument_service_exception(http_url, e, start_time)
-      raise e
-    end
-
-    # Parse the given JSON string into a data structure. Throws an exception if
-    # parsing fails
-    def parse_json(json) # rubocop:disable Metrics/MethodLength
-      result = nil
-      jsonified = json.is_a?(String) ? json : json.to_json
-      json_hash = parser.parse(jsonified) do |json_chunk|
-        if result
-          result = [result] unless result.is_a?(Array)
-          result << json_chunk
-        else
-          result = json_chunk
+      perform_request(http_url, query_params) do |conn|
+        conn.get do |req|
+          req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
+          req.headers['Accept'] = accept_headers
+          req.options.params_encoder = Faraday::FlatParamsEncoder
+          req.params = query_params
         end
       end
-
-      report_json_failure(json) unless result || json_hash
-
-      result || json_hash
     end
 
-    def post_json(http_url, json)
-      response = post_to_api(http_url, json)
-      parse_json(response.body)
-    end
+    # Perform an HTTP GET request against http_url, timing and instrumenting it
+    # consistently regardless of whether it succeeds, times out, fails to connect,
+    # or the remote API returns an error status or unparseable body. query_params
+    # is only used to report the query string on connection/service failures (a
+    # successful response reports its own resolved query string from the Faraday
+    # response itself)
+    def perform_request(http_url, query_params) # rubocop:disable Metrics/MethodLength
+      instrument_request(http_url, query_params)
 
-    def post_to_api(http_url, json) # rubocop:disable Metrics/AbcSize
-      # immediately log the time the request was sent in microseconds
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      conn = set_connection_timeout(create_http_connection(http_url))
+      conn = create_http_connection(http_url)
 
-      response = conn.post do |req|
-        req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
-        req.headers['Accept'] = 'application/json'
-        req.headers['Content-Type'] = 'application/json'
-        req.body = json
-      end
-
-      # immediately log the response was received
-      instrument_response(response, start_time, 'received')
-
-      ok?(response, http_url) && response
+      response = yield(conn)
+      instrument_response(response, start_time)
+      response
+    rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
+      instrument_connection_failure(http_url, query_params, e, start_time)
+      raise e
+    rescue Faraday::Error => e
+      service_exception = ServiceException.new(
+        e.message, e.response_status, http_url, e.response_body
+      )
+      instrument_service_exception(http_url, query_params, service_exception, start_time)
+      raise service_exception
     end
 
-    def create_http_connection(http_url, auth = false) # rubocop:disable Metrics/MethodLength
+    def create_http_connection(http_url) # rubocop:disable Metrics/MethodLength
       Faraday.new(url: http_url) do |config|
+        config.options.timeout = @connection_timeout
         config.use Faraday::Request::UrlEncoded
         config.use Faraday::FollowRedirects::Middleware
 
-        config.request :authorization, :basic, api_user, api_pw if auth
-        # instrument the request to log the time it takes to complete but only if we're in a Rails environment
-        config.request :instrumentation, name: 'requests.api' if in_rails?
+        # `requests.data_services_api`, emitted by Faraday's own instrumentation
+        # middleware, is the one hook whose payload is NOT a plain Hash: it's the
+        # raw Faraday::Env for the request (method, url, request_headers, etc, via
+        # Faraday::Env's own accessors), unlike every other event below.
+        if instrumenter
+          config.request :instrumentation, name: 'requests.data_services_api', instrumenter:
+        end
         # Faraday::ResourceNotFound (404) is not transient and is deliberately not retried.
         # Inner middleware exhausts its own budget before the exception reaches the next layer,
         # so stack the more conservative timeout retry inside the more generous connection retry.
-        config.request :retry, @connection_failed_retry_options
-        config.request :retry, @timeout_retry_options
+        config.request :retry, with_retry_instrumentation(@connection_failed_retry_options)
+        config.request :retry, with_retry_instrumentation(@timeout_retry_options)
 
         config.response :json
         # ! Since responses are processed by the middleware stack in reverse order
         config.response :raise_error
         # ! Passing the logger in last ensures that errors are logged before the exception is raised.
-        with_logger_in_rails(config)
+        config.response :logger, @faraday_logger, @faraday_logger_options if @faraday_logger
       end
     end
 
-    def set_connection_timeout(conn) # rubocop:disable Naming/AccessorMethodName
-      conn.options[:timeout] = 600
-      conn
+    # Add a retry_block to the given faraday-retry options that fires a
+    # retry.data_services_api notification before each retry attempt, preserving any
+    # retry_block the caller already configured
+    def with_retry_instrumentation(options)
+      return options unless instrumenter
+
+      original_retry_block = options[:retry_block]
+
+      options.merge(
+        retry_block: lambda do |env:, options:, retry_count:, exception:, will_retry_in:|
+          original_retry_block&.call(env:, options:, retry_count:, exception:, will_retry_in:)
+          instrument_retry(env, retry_count, exception, will_retry_in)
+        end
+      )
     end
 
-    def ok?(response, http_url)
-      unless (200..207).cover?(response.status)
-        response_body = JSON.parse(response.body, symbolize_names: true)
-        response_message = response_body[:message]
-        response_error = response_body[:error]
-        msg = "#{response_error}: #{response_message}"
-
-        raise ServiceException.new(msg, response.status, http_url, response.body)
-      end
-
-      true
+    # Fires 'retry.data_services_api' immediately before a retry attempt, with
+    # path (String), method (String, upcased), retry_count (Integer),
+    # exception, and will_retry_in (Float seconds until the retry fires - note
+    # this is seconds, not the milliseconds :duration uses on the other events
+    # below). exception is normally Faraday::TimeoutError or ConnectionFailed;
+    # it would be the synthetic Faraday::RetriableResponse if a status-code-based
+    # retry_statuses: were ever configured, which this gem doesn't set today.
+    def instrument_retry(env, retry_count, exception, will_retry_in)
+      instrumenter.instrument(
+        'retry.data_services_api',
+        path: env.url.path,
+        method: env.method.to_s.upcase,
+        retry_count: retry_count + 1,
+        exception:,
+        will_retry_in:
+      )
     end
 
     def as_http_api(api)
       return api if api.start_with?('http://', 'https://')
 
       # if the API is a relative path, append to the base URL
-      URI::HTTP.build(host: @url, path: api).to_s
+      URI.join(@url, api).to_s
     end
 
-    def report_json_failure(json)
-      msg = "JSON result was not parsed correctly: #{json.to_s.slice(0, 1000)}"
-
-      if in_rails?
-        # msg = 'JSON result was not parsed correctly (no temp file saved)'
-        logger.error(msg)
-      end
-
-      raise ServiceException.new(msg, 500, nil, json)
-    end
-
-    def instrument_response(response, start_time, _request_status)
-      # immediately log the time the response was received in microseconds
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      elapsed_time = (end_time - start_time) / 1000
+    # Fires 'response.data_services_api' for every response that doesn't raise,
+    # with response (the raw Faraday::Response - path/query_string/method are
+    # all derivable from response.env.url/.method rather than duplicated as
+    # separate payload keys) and duration (Integer milliseconds, floor-divided
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
+    def instrument_response(response, start_time)
+      elapsed_time = elapsed_ms(start_time)
       instrumenter&.instrument(
-        'response.api',
+        'response.data_services_api',
         response:,
         duration: elapsed_time
       )
     end
 
-    def instrument_connection_failure(http_url, exception, start_time) # rubocop:disable Metrics/MethodLength
-      # immediately log the time the response was received in microseconds
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      elapsed_time = (end_time - start_time) / 1000
-      # Service Unavailable status code (see https://httpstatuses.com/503)
-      # log the exception message and status code but only if we're in a Rails environment
-      in_rails? && log_message(
-        {
-          message: exception.message.to_s,
-          path: URI.parse(http_url).path,
-          query_string: URI.parse(http_url).query,
-          start_time: start_time || 0,
-          request_status: 'error',
-          request_time: elapsed_time,
-          status: 503
-        },
-        'error'
+    # Fires 'request.data_services_api' immediately before a request is sent.
+    # Payload: path (String, no scheme/host/query) and query_string (String or
+    # nil - nil for GET requests with no params).
+    def instrument_request(http_url, query_params)
+      instrumenter&.instrument(
+        'request.data_services_api',
+        path: URI.parse(http_url).path,
+        query_string: query_params && URI.encode_www_form(query_params)
       )
-
-      instrumenter&.instrument('connection_failure.api', exception:)
     end
 
-    def instrument_service_exception(http_url, exception, start_time) # rubocop:disable Metrics/MethodLength
-      # immediately log the time the response was received in microseconds
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      elapsed_time = (end_time - start_time) / 1000
-
-      # log the exception message and status code but only if we're in a Rails environment
-      in_rails? && log_message(
-        {
-          message: exception.message.to_s,
-          path: URI.parse(http_url).path,
-          query_string: URI.parse(http_url).query,
-          start_time: start_time || 0,
-          request_status: 'error',
-          request_time: elapsed_time,
-          status: exception.status || RACK::Exception::HTTP_STATUS_CODES[exception]
-        },
-        'error'
+    # Fires 'connection_failure.data_services_api' on a network-level failure
+    # (after retries are exhausted): the request never got a response at all.
+    # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
+    # (String, no scheme/host/query), query_string (String or nil - nil for
+    # GET requests with no params), duration (Integer milliseconds, see
+    # #instrument_response), and status (always the literal 503 - a fixed
+    # value, not derived from any actual response, since none was received).
+    def instrument_connection_failure(http_url, query_params, exception, start_time)
+      instrumenter&.instrument(
+        'connection_failure.data_services_api',
+        exception:,
+        path: URI.parse(http_url).path,
+        query_string: query_params && URI.encode_www_form(query_params),
+        duration: elapsed_ms(start_time),
+        status: 503
       )
+    end
 
-      instrumenter&.instrument('service_exception.api', exception:)
+    # Fires 'service_exception.data_services_api' when the remote API responded
+    # but with an error status or an unparseable body. exception is always a
+    # ServiceException here: perform_request wraps every Faraday::Error (bad
+    # status, unparseable body, etc) into one before raising, so subscribers
+    # never see a raw Faraday::ResourceNotFound/ClientError/ServerError/ParsingError.
+    # Payload also has path and query_string (same shape/nilability as
+    # #instrument_connection_failure), duration (Integer milliseconds), and
+    # status (Integer or nil - nil if Faraday never associated a response with
+    # the error; see Faraday::Error#response_status, which can happen for some
+    # Faraday::ParsingError cases).
+    def instrument_service_exception(http_url, query_params, exception, start_time)
+      instrumenter&.instrument(
+        'service_exception.data_services_api',
+        exception:,
+        path: URI.parse(http_url).path,
+        query_string: query_params && URI.encode_www_form(query_params),
+        duration: elapsed_ms(start_time),
+        status: exception.status
+      )
     end
 
     # Return true if we're currently running in a Rails environment
@@ -297,85 +247,9 @@ module DataServicesApi
       defined?(Rails)
     end
 
-    def with_logger_in_rails(config)
-      return config.response :logger unless in_rails?
-
-      config.response :logger, Rails.logger, {
-        headers: false,
-        bodies: false,
-        errors: false,
-        log_level: :debug
-      }
-    end
-
-    # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
-    # Log the provided properties with the appropriate log level
-    # @param [Hash] log_fields - The fields to log
-    # @param [String] log_fields.message - The message to log
-    # @param [Faraday::Response] log_fields.response - The response object
-    # @param [String] log_fields.path - The URL of the request with query string
-    # @param [String] log_fields.query_string - The query string of the request
-    # @param [String] log_fields.method - The HTTP method of the request
-    # @param [String] log_fields.request_status - The status of the request (received, processing, completed, error)
-    # @param [Float] log_fields.request_time - The time it took to process the request
-    # @param [Float] log_fields.start_time - The time the request was sent
-    # @param [Integer] log_fields.status - The status code of the response
-    # @param [String] log_type - The type of log to use (info, warn, error, debug)
-    # @return [void]
-    def log_message(log_fields, log_type = 'info')
-      puts "\n" if in_rails? && Rails.env.development? && Rails.logger.debug? && log_fields.present?
-      # immediately log the time the initial response was received in microseconds
-      start_time = log_fields[:start_time] if log_fields[:start_time]
-      # immediately log the receipt time of the response in miroseconds
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
-      # calculate the elapsed time in milliseconds by dividing the difference in time by 1000
-      duration = (end_time - start_time) / 1000 if start_time
-      # parse out the optional parameters and set defaults
-      log_fields[:message] ||= log_fields[:response]&.body.to_s
-      log_fields[:method]
-      log_fields[:request_time] ||= duration
-      log_fields[:request_status] ||= 'completed' if log_fields[:status] == 200
-      log_fields[:start_time] = nil
-      log_fields[:status]
-
-      if log_fields[:request_time]
-        seconds, milliseconds = log_fields[:request_time].divmod(1000)
-        log_fields[:request_time] = format('%.0f.%03d', seconds, milliseconds) # rubocop:disable Style/FormatStringToken
-      end
-
-      if log_fields[:query_string]
-        log_fields[:path] += "?#{log_fields[:query_string]}" unless log_fields[:path].to_s.include?('?') # rubocop:disable Layout/LineLength
-        log_fields[:query_string] = nil
-      end
-      # Clear out nil values from the log fields, sort the fields and convert to a hash
-      logs = log_fields.compact.sort.to_h
-
-      # Log the API responses at the appropriate level requested
-      case log_type
-      when 'error'
-        logger.error(JSON.generate(logs))
-      when 'warn'
-        logger.warn(JSON.generate(logs))
-      when 'debug'
-        logger.debug(JSON.generate(logs))
-      else
-        logger.info(JSON.generate(logs))
-      end
-      logger.flush if logger.respond_to?(:flush)
-    end
-    # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/AbcSize
-
-    # Construct the message based on the properties received and return the formatted message
-    # @param [String] msg - The initial message to log
-    # @param [Float] [timer] - The time it took to process the request
-    # @return [String] - The formatted message
-    def generate_service_message(fields)
-      raise ServiceException.new('Message is required', 400) unless fields[:msg]
-
-      msg = fields[:msg]
-      timer = fields[:timer] || 0
-      msg += ", time taken: #{format('%.0f ms', timer)}" if timer.positive?
-      msg
+    # The elapsed time in milliseconds since the given CLOCK_MONOTONIC microsecond timestamp
+    def elapsed_ms(start_time)
+      (Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond) - start_time) / 1000
     end
   end
 end
