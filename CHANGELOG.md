@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking**: `DataServicesApi::Value` no longer subclasses `Hash`. It's
+  now an immutable, opaque value object exposing only `#value`, `#type`,
+  and `#uri`. Code that read a `Value` via `[]`, `.each_key`, or compared it
+  against a plain `Hash` will need to switch to the named accessors.
+  `Value.new` now takes keyword args (`value:`, `type:`, `uri:`) instead of
+  a Hash; use the new `Value.from_json_ld(node)` to parse a raw JSON-LD
+  value node (accepts either String- or Symbol-keyed input). The existing
+  `Value.uri`/`Value.year_month`/`#with_uri`/`#with_typed_value` factories
+  are unchanged. This closes off the class of bug where a caller and
+  `Value`'s internal storage disagreed on String vs Symbol keys and failed
+  silently (see the fix earlier in this same file)
 - **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
   `Faraday::ServerError`/`Faraday::ParsingError` (any 4xx/5xx status, or an
   unparseable response body) are no longer raised directly to callers.
