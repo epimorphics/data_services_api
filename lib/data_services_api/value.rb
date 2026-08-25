@@ -1,35 +1,57 @@
 # frozen_string_literal: true
 
 module DataServicesApi
-  # An immutable JSON-LD value node: a scalar with an optional @type, or a
-  # URI reference (@id). This is not a Hash, so use #value/#type/#uri
-  # rather than [].
-  class Value
-    attr_reader :value, :type, :uri
+  # Encapsulates a single JSON-LD value node coming back from, or destined
+  # for, the API: a scalar with an optional @type, or a URI reference (@id).
+  #
+  # This is a Hash so that #to_json (and anything else relying on Hash's
+  # native JSON serialization, e.g. QueryGenerator building request terms)
+  # produces the correct JSON-LD shape for free, since the storage keys
+  # (@value/@type/@id) are the wire format. Internal storage is always
+  # String-keyed, and [] is overridden to normalize lookups, so callers can
+  # use either String or Symbol keys without silently missing.
+  class Value < Hash
+    def initialize(base = {}, adds = {})
+      super()
 
-    def initialize(value: nil, type: nil, uri: nil)
-      @value = value
-      @type = type
-      @uri = uri
+      merge!(base.transform_keys(&:to_s))
+        .merge!(adds.transform_keys(&:to_s))
       freeze
     end
 
-    # node may have string or symbol keys depending on where it came from
-    def self.from_json_ld(node)
-      node = node.transform_keys(&:to_s)
-      new(value: node['@value'], type: node['@type'], uri: node['@id'])
+    def [](key)
+      super(key.to_s)
     end
 
-    def self.uri(uri)
-      new(uri: uri)
+    def value
+      self['@value']
+    end
+
+    def type
+      self['@type']
+    end
+
+    def uri
+      self['@id']
+    end
+
+    # Parse a raw JSON-LD value node, however it was decoded (String- or
+    # Symbol-keyed hash — from JSON.parse, from a test fixture written with
+    # symbol literals, doesn't matter).
+    def self.from_json_ld(node)
+      new(node)
     end
 
     def with_uri(uri)
-      self.class.new(value: value, type: type, uri: uri)
+      Value.new(self, { '@id' => uri })
+    end
+
+    def self.uri(uri)
+      Value.new.with_uri(uri)
     end
 
     def with_typed_value(value, type)
-      self.class.new(value: value, type: type, uri: uri)
+      Value.new(self, { '@value' => value, '@type' => type })
     end
 
     def with_year_month(year, month)
@@ -41,11 +63,7 @@ module DataServicesApi
     end
 
     def self.year_month(year, month)
-      new.with_year_month(year, month)
-    end
-
-    def ==(other)
-      other.is_a?(Value) && value == other.value && type == other.type && uri == other.uri
+      Value.new.with_year_month(year, month)
     end
   end
 end

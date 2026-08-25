@@ -25,17 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Breaking**: `DataServicesApi::Value` no longer subclasses `Hash`. It's
-  now an immutable, opaque value object exposing only `#value`, `#type`,
-  and `#uri`. Code that read a `Value` via `[]`, `.each_key`, or compared it
-  against a plain `Hash` will need to switch to the named accessors.
-  `Value.new` now takes keyword args (`value:`, `type:`, `uri:`) instead of
-  a Hash; use the new `Value.from_json_ld(node)` to parse a raw JSON-LD
-  value node (accepts either String- or Symbol-keyed input). The existing
-  `Value.uri`/`Value.year_month`/`#with_uri`/`#with_typed_value` factories
-  are unchanged. This closes off the class of bug where a caller and
-  `Value`'s internal storage disagreed on String vs Symbol keys and failed
-  silently (see the fix earlier in this same file)
+- Fixed `DataServicesApi::Value` reading the wrong data depending on
+  whether it was constructed or accessed with String or Symbol keys (e.g.
+  `Value.new('@id': uri)['@id']` returning `nil`). `Value` remains a `Hash`
+  subclass, since consuming code (and the gem's own `QueryGenerator`) relies
+  on `Hash`'s native `#to_json` to serialize it to the correct JSON-LD
+  shape, but construction now normalizes all input keys to strings, and
+  `[]` is overridden to normalize the lookup key the same way. So
+  `value['@value']` and `value[:@value]` (and the named `#value`/`#type`/
+  `#uri` accessors, which are implemented in terms of `[]`) always agree,
+  regardless of which key convention the caller or the API response used.
+  Added `Value.from_json_ld(node)` as an explicit parsing entry point for a
+  raw JSON-LD value node (String- or Symbol-keyed)
 - **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
   `Faraday::ServerError`/`Faraday::ParsingError` (any 4xx/5xx status, or an
   unparseable response body) are no longer raised directly to callers.
@@ -123,13 +124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `post_to_api`). Confirmed unused by both consuming apps (`ppd-explorer`,
   `ukhpi`); GET is the only HTTP method the gem now sends, so `method` is no
   longer part of `request.data_services_api`'s payload
-- Fixed `Value`, which silently dropped data passed with symbol keys (e.g.
-  `Value.new('@id': uri)`) instead of raising: the earlier switch from
-  symbol to string keys (`self[:@value]` -> `self['@value']`) changed the
-  accessors but not the constructor, which still merged caller-supplied
-  hashes without normalizing their keys. `Value#initialize` now normalizes
-  all keys to strings on construction
-
 ## 1.7.0 - 2026-07-13
 
 ### Added

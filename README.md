@@ -141,14 +141,20 @@ not a transient failure.
 ### `Value`
 
 `DataServicesApi::Value` represents a single JSON-LD value node: a scalar
-with an optional `@type`, or a `@id` URI reference.
+with an optional `@type`, or a `@id` URI reference. It's a `Hash` subclass,
+so it serializes to the correct JSON-LD shape via the standard `#to_json`
+(needed by `QueryGenerator` to build request terms), but always read and
+write it via `#value`/`#type`/`#uri`, or `[]` with either a String or Symbol
+key, both are normalized internally so they always agree, rather than
+relying on the exact key shape used to construct it.
 
-> [!WARNING]
-> **Breaking change**: as of this release, `Value` no longer subclasses
-> `Hash`. It's an immutable, opaque object, read it through `#value`,
-> `#type`, and `#uri`, not `[]`. Code that treated a `Value` as a `Hash`
-> (bracket access, `.each_key`, equality against a plain `{}`) needs
-> updating.
+> [!NOTE]
+> Prior to this release, `Value` read `self[:@value]` (Symbol keys) while
+> callers often constructed it from `JSON.parse` output (String keys), so a
+> caller and `Value`'s internal storage could silently disagree on key type
+> and return the wrong data. `[]` and construction now both normalize keys
+> to strings, so this no longer happens regardless of which convention a
+> caller uses.
 
 Building a value to use in a query constraint:
 
