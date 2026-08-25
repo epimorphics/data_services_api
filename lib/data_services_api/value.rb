@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module DataServicesApi
-  # An immutable JSON-LD value node: a scalar with an optional @type,
-  # or a URI reference (@id). Not Hash-like — read it through the named
-  # accessors below, not `[]`.
+  # An immutable JSON-LD value node: a scalar with an optional @type, or a
+  # URI reference (@id). This is not a Hash, so use #value/#type/#uri
+  # rather than [].
   class Value
     attr_reader :value, :type, :uri
 
@@ -14,9 +14,7 @@ module DataServicesApi
       freeze
     end
 
-    # Parse a raw JSON-LD value node, however it was decoded
-    # (String- or Symbol-keyed hash — from JSON.parse, from a test
-    # fixture written with symbol literals, doesn't matter).
+    # node may have string or symbol keys depending on where it came from
     def self.from_json_ld(node)
       node = node.transform_keys(&:to_s)
       new(value: node['@value'], type: node['@type'], uri: node['@id'])
