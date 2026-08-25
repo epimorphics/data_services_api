@@ -1,7 +1,7 @@
 module DataServicesApi
   # Encapsulates a single value coming back from the API
   class Value < Hash[string, json_value]
-    def initialize: (?::Hash[string, json_value] base, ?::Hash[string, json_value] adds) -> void
+    def initialize: (?::Hash[untyped, json_value] base, ?::Hash[untyped, json_value] adds) -> void
 
     def value: () -> json_value
 

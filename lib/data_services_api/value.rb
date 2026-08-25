@@ -6,8 +6,8 @@ module DataServicesApi
     def initialize(base = {}, adds = {})
       super()
 
-      merge!(base)
-        .merge!(adds)
+      merge!(base.transform_keys(&:to_s))
+        .merge!(adds.transform_keys(&:to_s))
       freeze
     end
 

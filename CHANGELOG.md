@@ -112,6 +112,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `post_to_api`). Confirmed unused by both consuming apps (`ppd-explorer`,
   `ukhpi`); GET is the only HTTP method the gem now sends, so `method` is no
   longer part of `request.data_services_api`'s payload
+- Fixed `Value`, which silently dropped data passed with symbol keys (e.g.
+  `Value.new('@id': uri)`) instead of raising: the earlier switch from
+  symbol to string keys (`self[:@value]` -> `self['@value']`) changed the
+  accessors but not the constructor, which still merged caller-supplied
+  hashes without normalizing their keys. `Value#initialize` now normalizes
+  all keys to strings on construction
 
 ## 1.7.0 - 2026-07-13
 

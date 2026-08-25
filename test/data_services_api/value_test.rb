@@ -42,6 +42,14 @@ describe 'DataServicesApi::Value' do
     _(v1.type).must_equal 'http://fakexsd.org/bar'
   end
 
+  it 'should normalize symbol keys to strings' do
+    v1 = DataServicesApi::Value.new('@id': 'http://foo/bar')
+
+    _(v1['@id']).must_equal 'http://foo/bar'
+    _(v1.uri).must_equal 'http://foo/bar'
+    _(v1.key?(:@id)).must_equal false
+  end
+
   it 'should specify a year and month value' do
     v1 = v.with_year_month(2016, 2)
 
