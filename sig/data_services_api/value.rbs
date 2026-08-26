@@ -1,19 +1,24 @@
 module DataServicesApi
-  # Encapsulates a single value coming back from the API
+  # Encapsulates a single JSON-LD value node coming back from, or destined
+  # for, the API: a scalar with an optional @type, or a URI reference (@id).
   class Value < Hash[string, json_value]
-    def initialize: (?::Hash[string, json_value] base, ?::Hash[string, json_value] adds) -> void
+    def initialize: (?::Hash[untyped, json_value] base, ?::Hash[untyped, json_value] adds) -> void
+
+    def []: (untyped key) -> json_value
 
     def value: () -> json_value
 
-    def type: () -> uri
+    def type: () -> json_value
 
-    def uri: () -> uri
+    def uri: () -> json_value
+
+    def self.from_json_ld: (untyped node) -> Value
 
     def with_uri: (uri uri) -> Value
 
     def self.uri: (uri uri) -> Value
 
-    def with_typed_value: (untyped value, untyped type) -> Value
+    def with_typed_value: (untyped value, uri type) -> Value
 
     def with_year_month: (untyped year, untyped month) -> Value
 

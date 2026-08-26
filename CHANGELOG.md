@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Fixed `DataServicesApi::Value` reading the wrong data depending on
+  whether it was constructed or accessed with String or Symbol keys (e.g.
+  `Value.new('@id': uri)['@id']` returning `nil`). `Value` remains a `Hash`
+  subclass, since consuming code (and the gem's own `QueryGenerator`) relies
+  on `Hash`'s native `#to_json` to serialize it to the correct JSON-LD
+  shape, but construction now normalizes all input keys to strings, and
+  `[]` is overridden to normalize the lookup key the same way. So
+  `value['@value']` and `value[:@value]` (and the named `#value`/`#type`/
+  `#uri` accessors, which are implemented in terms of `[]`) always agree,
+  regardless of which key convention the caller or the API response used.
+  Added `Value.from_json_ld(node)` as an explicit parsing entry point for a
+  raw JSON-LD value node (String- or Symbol-keyed)
 - **Breaking**: `Faraday::ResourceNotFound`/`Faraday::ClientError`/
   `Faraday::ServerError`/`Faraday::ParsingError` (any 4xx/5xx status, or an
   unparseable response body) are no longer raised directly to callers.
@@ -112,7 +124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `post_to_api`). Confirmed unused by both consuming apps (`ppd-explorer`,
   `ukhpi`); GET is the only HTTP method the gem now sends, so `method` is no
   longer part of `request.data_services_api`'s payload
-
 ## 1.7.0 - 2026-07-13
 
 ### Added

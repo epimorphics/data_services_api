@@ -13,6 +13,7 @@ _dimensions_.
 - [Usage](#usage)
   - [Quick start](#quick-start)
   - [`Service` configuration options](#service-configuration-options)
+  - [`Value`](#value)
 - [Developer notes](#developer-notes)
   - [Linting](#linting)
   - [Tests](#tests)
@@ -136,6 +137,40 @@ all optional except `url`:
 
 `Faraday::ResourceNotFound` (404) responses are not retried, since a 404 is
 not a transient failure.
+
+### `Value`
+
+`DataServicesApi::Value` represents a single JSON-LD value node: a scalar
+with an optional `@type`, or a `@id` URI reference. It's a `Hash` subclass,
+so it serializes to the correct JSON-LD shape via the standard `#to_json`
+(needed by `QueryGenerator` to build request terms), but always read and
+write it via `#value`/`#type`/`#uri`, or `[]` with either a String or Symbol
+key, both are normalized internally so they always agree, rather than
+relying on the exact key shape used to construct it.
+
+> [!NOTE]
+> Prior to this release, `Value` read `self[:@value]` (Symbol keys) while
+> callers often constructed it from `JSON.parse` output (String keys), so a
+> caller and `Value`'s internal storage could silently disagree on key type
+> and return the wrong data. `[]` and construction now both normalize keys
+> to strings, so this no longer happens regardless of which convention a
+> caller uses.
+
+Building a value to use in a query constraint:
+
+```ruby
+DataServicesApi::Value.uri('http://landregistry.data.gov.uk/id/region/united-kingdom')
+DataServicesApi::Value.year_month(2019, 1)
+```
+
+Parsing a value node out of a raw API response (accepts either String- or
+Symbol-keyed input):
+
+```ruby
+node = { '@value' => '2019-01', '@type' => 'http://www.w3.org/2001/XMLSchema#gYearMonth' }
+value = DataServicesApi::Value.from_json_ld(node)
+value.value # => '2019-01'
+```
 
 ### Errors
 
