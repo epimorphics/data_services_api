@@ -18,7 +18,7 @@ module DataServicesApi
 
     def self.uri: (uri uri) -> Value
 
-    def with_typed_value: (untyped value, untyped type) -> Value
+    def with_typed_value: (untyped value, uri type) -> Value
 
     def with_year_month: (untyped year, untyped month) -> Value
 
