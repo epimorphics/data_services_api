@@ -120,6 +120,7 @@ describe 'DataServicesAPI::Service' do
 
     _(payload).wont_be_nil
     _(payload[:response].body['items']).wont_be_nil
+    _(payload[:row_count]).must_equal payload[:response].body['items'].length
   end
 
   # The name is kept to match its VCR cassette. The duration is reported in

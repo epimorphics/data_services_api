@@ -85,8 +85,12 @@ module DataServicesApi
     # with response (the raw Faraday::Response - path/query_string/method are
     # all derivable from response.env.url/.method rather than duplicated as
     # separate payload keys) and duration (Integer milliseconds, floor-divided
-    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value),
+    # and row_count (Integer, the length of the body's `items` array, or nil
+    # when there isn't one, such as for an explain response).
     def instrument_response: (untyped response, untyped start_time) -> untyped
+
+    def row_count: (untyped body) -> Integer?
 
     # Fires 'connection_failure.data_services_api' on a network-level failure
     # (after retries are exhausted): the request never got a response at all.

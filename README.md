@@ -317,7 +317,7 @@ the event doesn't include that field):
 | `duration` | `Integer`, **milliseconds** | - | - | ✓ | ✓ | ✓ | - |
 | `will_retry_in` | `Float`, **seconds** | - | - | - | - | - | ✓ |
 | `retry_count` | `Integer`, 1-indexed | - | - | - | - | - | ✓ |
-| `returned_rows` | `Integer`, nilable | - | - | -<sup>‡</sup> | - | - | - |
+| `row_count` | `Integer`, nilable<sup>‖</sup> | - | - | ✓ | - | - | - |
 
 <sup>†</sup> `requests.data_services_api`'s payload is a `Faraday::Env`, not a
 Hash - none of these field names apply; see above.<br>
@@ -327,7 +327,9 @@ examples below.<br>
 <sup>§</sup> `nil` for GET requests with no params.<br>
 <sup>¶</sup> `nil` if Faraday never associated a response with the error
 (`Faraday::Error#response_status` returns `nil` in that case - can happen
-for some `Faraday::ParsingError`s).
+for some `Faraday::ParsingError`s).<br>
+<sup>‖</sup> the length of the body's `items` array, or `nil` when there isn't
+one (such as an explain response).
 
 **`duration` (milliseconds) and `will_retry_in` (seconds) use different units
 and types** - both describe elapsed/remaining time, but come from different
@@ -418,13 +420,12 @@ to load (and attach) at boot rather than on first use:
 DataServicesApiSubscriber
 ```
 
-**Deriving the returned row count** (see the note on `response.data_services_api`
-above — it isn't a separate field):
+**The returned row count** is in `response.data_services_api`'s `row_count`,
+so a subscriber doesn't need to know the shape of the API's response body:
 
 ```ruby
 def response(event)
-  response = event.payload[:response]
-  returned_rows = response.body['items']&.size
+  returned_rows = event.payload[:row_count]
   # ...
 end
 ```

@@ -207,14 +207,22 @@ module DataServicesApi
     # with response (the raw Faraday::Response - path/query_string/method are
     # all derivable from response.env.url/.method rather than duplicated as
     # separate payload keys) and duration (Integer milliseconds, floor-divided
-    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value),
+    # and row_count (Integer, the length of the body's `items` array, or nil
+    # when there isn't one, such as for an explain response).
     def instrument_response(response, start_time)
       elapsed_time = elapsed_ms(start_time)
       instrumenter&.instrument(
         'response.data_services_api',
         response:,
-        duration: elapsed_time
+        duration: elapsed_time,
+        row_count: row_count(response.body)
       )
+    end
+
+    def row_count(body)
+      items = body['items'] if body.is_a?(Hash)
+      items.length if items.is_a?(Array)
     end
 
     # Fires 'request.data_services_api' immediately before a request is sent.

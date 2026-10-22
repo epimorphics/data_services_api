@@ -45,6 +45,10 @@ describe 'a response body the gem does not expect' do
     notifier.instrumentations.map(&:first)
   end
 
+  def response_payload
+    notifier.instrumentations.find { |name, _| name == 'response.data_services_api' }&.last
+  end
+
   def service_exception_payload
     notifier.instrumentations.find { |name, _| name == 'service_exception.data_services_api' }&.last
   end
@@ -119,6 +123,7 @@ describe 'a response body the gem does not expect' do
     _(rows).must_equal [{ '@id' => 'http://example.com/1', 'ukhpi:refMonth' => { '@value' => '2020-12' } }]
     _(event_names).must_include 'response.data_services_api'
     _(event_names).wont_include 'service_exception.data_services_api'
+    _(response_payload[:row_count]).must_equal 1
   end
 
   it 'should still return an explain response, which has no items, as it is' do
@@ -128,5 +133,7 @@ describe 'a response body the gem does not expect' do
     _(dataset.explain(query)).must_equal explain
     _(event_names).must_include 'response.data_services_api'
     _(event_names).wont_include 'service_exception.data_services_api'
+    _(response_payload).must_include :row_count
+    _(response_payload[:row_count]).must_be_nil
   end
 end

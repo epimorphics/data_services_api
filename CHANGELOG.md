@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Service#api_get_json` takes a `require_items:` keyword. With
   `require_items: true`, a body that isn't a JSON object with an `items`
   array raises `ServiceException`. `Dataset#query` uses it
+- `response.data_services_api` carries a `row_count`: the length of the
+  body's `items` array, or `nil` when there isn't one (such as for
+  `Dataset#explain`). Subscribers can log the number of rows returned
+  without knowing the API's `{"meta": …, "items": […]}` envelope.
+  ppd-explorer's and ukhpi's log subscribers currently look for an `Array`
+  body, which is never the case, so they never log `returned_rows`
 
 ### Changed
 
