@@ -192,6 +192,15 @@ happened:
   type to rescue for this whole category, regardless of which Faraday
   version or exact status code is behind it
 
+A successful status doesn't guarantee a usable body. Every body is parsed as
+JSON whatever its `Content-Type`, so a page that isn't JSON (such as an HTML
+maintenance page served with a 200) raises `ServiceException`. So does an
+empty body, a bare JSON value such as a string or number, and, from
+`Dataset#query`, a JSON object without an `items` array. These raise with the
+response's status (usually 200) and the raw body as `service_message`, and
+fire `service_exception.data_services_api` instead of `response.data_services_api`.
+`Dataset#explain` returns a different shape, so it isn't checked for `items`.
+
 ---
 
 ## Developer notes
@@ -286,7 +295,8 @@ configured `instrumenter`:
   (timeout or refused connection), after retries are exhausted. The request
   never got a response at all.
 - **`service_exception.data_services_api`** - the remote API responded, but
-  with an error status (any 4xx/5xx) or an unparseable body. The exception in
+  with an error status (any 4xx/5xx) or a body that isn't the JSON the gem
+  expects (see [Errors](#errors)). The exception in
   this payload is always a `DataServicesApi::ServiceException` - Faraday's own
   exception types are wrapped before a subscriber ever sees them.
 - **`retry.data_services_api`** - fired immediately before each retry attempt

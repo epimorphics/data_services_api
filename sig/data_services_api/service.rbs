@@ -31,14 +31,17 @@ module DataServicesApi
 
     def dataset: (untyped name) -> Dataset
 
-    def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> json_value
+    # Get parsed JSON from the given API. options are sent as query params, like
+    # params. With require_items: true, a body that isn't an object with an
+    # `items` array raises ServiceException, as for a body that isn't JSON.
+    def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options, ?require_items: bool) -> json_value
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json: (untyped http_url, untyped params, untyped options) -> json_value
+    def get_json: (untyped http_url, untyped params, untyped options, ?require_items: bool) -> json_value
 
-    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options) -> untyped
+    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options, ?require_items: bool) -> untyped
 
     # Perform an HTTP GET request against http_url, timing and instrumenting it
     # consistently regardless of whether it succeeds, times out, fails to connect,
@@ -46,9 +49,16 @@ module DataServicesApi
     # is only used to report the query string on connection/service failures (a
     # successful response reports its own resolved query string from the Faraday
     # response itself)
-    def perform_request: (untyped http_url, untyped query_params) { (untyped) -> untyped } -> untyped
+    def perform_request: (untyped http_url, untyped query_params, ?require_items: bool) { (untyped) -> untyped } -> untyped
 
     def create_http_connection: (untyped http_url) -> untyped
+
+    # Raise Faraday::ParsingError, which #perform_request wraps as a
+    # ServiceException, for a parsed body that the caller can't use: anything
+    # other than a JSON object or array (an empty body parses to nil), or, with
+    # require_items, anything other than an object with an `items` array. The
+    # messages are fixed strings, so they're safe to use as metric labels.
+    def check_body: (untyped response, bool require_items) -> void
 
     # Add a retry_block to the given faraday-retry options that fires a
     # retry.data_services_api notification before each retry attempt, preserving any

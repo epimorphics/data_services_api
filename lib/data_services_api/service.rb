@@ -60,21 +60,24 @@ module DataServicesApi
       Dataset.new(endpoint, self)
     end
 
-    def api_get_json(api, params, options = {})
-      get_json(as_http_api(api), params, options)
+    # Get parsed JSON from the given API. options are sent as query params, like
+    # params. With require_items: true, a body that isn't an object with an
+    # `items` array raises ServiceException, as for a body that isn't JSON.
+    def api_get_json(api, params, options = {}, require_items: false)
+      get_json(as_http_api(api), params, options, require_items:)
     end
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options)
-      get_from_api(http_url, 'application/json', params, options).body
+    def get_json(http_url, params, options, require_items: false)
+      get_from_api(http_url, 'application/json', params, options, require_items:).body
     end
 
-    def get_from_api(http_url, accept_headers, params, options)
+    def get_from_api(http_url, accept_headers, params, options, require_items: false)
       query_params = params.merge(options)
 
-      perform_request(http_url, query_params) do |conn|
+      perform_request(http_url, query_params, require_items:) do |conn|
         conn.get do |req|
           req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
           req.headers['Accept'] = accept_headers
@@ -90,13 +93,14 @@ module DataServicesApi
     # is only used to report the query string on connection/service failures (a
     # successful response reports its own resolved query string from the Faraday
     # response itself)
-    def perform_request(http_url, query_params) # rubocop:disable Metrics/MethodLength
+    def perform_request(http_url, query_params, require_items: false) # rubocop:disable Metrics/MethodLength
       instrument_request(http_url, query_params)
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = create_http_connection(http_url)
 
       response = yield(conn)
+      check_body(response, require_items)
       instrument_response(response, start_time)
       response
     rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
@@ -129,12 +133,33 @@ module DataServicesApi
         config.request :retry, with_retry_instrumentation(@connection_failed_retry_options)
         config.request :retry, with_retry_instrumentation(@timeout_retry_options)
 
-        config.response :json
+        # Parse every body as JSON whatever its content type, so that an HTML page
+        # served with a 200 raises Faraday::ParsingError instead of reaching the
+        # caller as a string. Keep the raw body so #check_body can report it.
+        config.response :json, content_type: [], preserve_raw: true
         # ! Since responses are processed by the middleware stack in reverse order
         config.response :raise_error
         # ! Passing the logger in last ensures that errors are logged before the exception is raised.
         config.response :logger, @faraday_logger, @faraday_logger_options if @faraday_logger
       end
+    end
+
+    # Raise Faraday::ParsingError, which #perform_request wraps as a
+    # ServiceException, for a parsed body that the caller can't use: anything
+    # other than a JSON object or array (an empty body parses to nil), or, with
+    # require_items, anything other than an object with an `items` array. The
+    # messages are fixed strings, so they're safe to use as metric labels.
+    def check_body(response, require_items)
+      body = response.body
+      problem = if !body.is_a?(Hash) && !body.is_a?(Array)
+                  'Response body is not a JSON object or array'
+                elsif require_items && !(body.is_a?(Hash) && body['items'].is_a?(Array))
+                  'Response body has no items array'
+                end
+      return unless problem
+
+      raw = { status: response.status, headers: response.headers, body: response.env[:raw_body] }
+      raise Faraday::ParsingError.new(problem, raw)
     end
 
     # Add a retry_block to the given faraday-retry options that fires a

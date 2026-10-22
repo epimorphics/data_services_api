@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `Service#api_get_json` takes a `require_items:` keyword. With
+  `require_items: true`, a body that isn't a JSON object with an `items`
+  array raises `ServiceException`. `Dataset#query` uses it
+
 ### Changed
 
 - `DSAPIResponseConverter` now builds one hash per row instead of allocating
@@ -15,6 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A response that isn't the JSON the gem expects now raises
+  `ServiceException`, instead of reaching the application as a crash in its
+  own code after a successful `response.data_services_api` event. This
+  covers a body that isn't JSON whatever its `Content-Type` (such as an HTML
+  maintenance page served with a 200), an empty body, a bare JSON value, and,
+  from `Dataset#query`, a JSON object without an `items` array. A JSON body
+  served without a JSON content type is now parsed instead of being returned
+  as a string. The exception carries the response's status (usually 200) and
+  the raw body as `service_message`, and fires
+  `service_exception.data_services_api` instead of
+  `response.data_services_api`, so subscribers count the call as failed
 - `connection_failure.data_services_api` now sends `status: nil` instead of
   a fixed `503`. No response arrives on a connection failure, so there's no
   status to report. The key is still present, so the payload keeps the same
