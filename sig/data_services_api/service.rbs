@@ -83,8 +83,7 @@ module DataServicesApi
     # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
     # (String, no scheme/host/query), query_string (String or nil - nil for
     # GET requests with no params), duration (Integer milliseconds, see #instrument_response),
-    # and status (always the literal 503 - a fixed value, not derived from any
-    # actual response, since none was received).
+    # and status (always nil, since no response was received).
     def instrument_connection_failure: (untyped http_url, untyped query_params, untyped exception, untyped start_time) -> untyped
 
     # Fires 'service_exception.data_services_api' when the remote API responded

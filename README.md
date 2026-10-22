@@ -303,7 +303,7 @@ the event doesn't include that field):
 | `path` | `String` (bare path, no scheme/host/query) | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | ✓ |
 | `query_string` | `String`, nilable<sup>§</sup> | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | - |
 | `method` | `String`, upcased | - | - | -<sup>‡</sup> | - | - | ✓ |
-| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | always `503` | nilable<sup>¶</sup> | - |
+| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | always `nil` | nilable<sup>¶</sup> | - |
 | `duration` | `Integer`, **milliseconds** | - | - | ✓ | ✓ | ✓ | - |
 | `will_retry_in` | `Float`, **seconds** | - | - | - | - | - | ✓ |
 | `retry_count` | `Integer`, 1-indexed | - | - | - | - | - | ✓ |
@@ -373,7 +373,7 @@ class DataServicesApiSubscriber < ActiveSupport::Subscriber
   def connection_failure(event)
     exception = event.payload[:exception]
     Prometheus::Client.registry.get(:api_connection_failure).increment
-    Rails.logger.error(message: "API connection failure: #{exception.message}", status: 503)
+    Rails.logger.error(message: "API connection failure: #{exception.message}")
   end
 
   def service_exception(event)
