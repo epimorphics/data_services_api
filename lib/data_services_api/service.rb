@@ -30,7 +30,10 @@ module DataServicesApi
       log_level: :debug
     }.freeze
 
-    DEFAULT_CONNECTION_TIMEOUT_SECONDS = 600
+    # Per attempt, and timeouts are retried (see DEFAULT_TIMEOUT_RETRY_OPTIONS),
+    # so a call that keeps timing out takes about three times this long.
+    # Applications should set connection_timeout for their slowest legitimate query.
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS = 120
 
     def initialize(config = {}) # rubocop:disable Metrics/MethodLength
       @instrumenter = config[:instrumenter] || (in_rails? && ActiveSupport::Notifications)

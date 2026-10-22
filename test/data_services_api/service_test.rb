@@ -189,4 +189,17 @@ describe 'DataServicesAPI::Service' do
     _(retries.size).must_equal 2
     _(retries.map { |_, payload| payload[:retry_count] }).must_equal [1, 2]
   end
+
+  it 'should time out after 120 seconds by default' do
+    connection = DataServicesApi::Service.new(url: api_url).send(:create_http_connection, api_url)
+
+    _(connection.options.timeout).must_equal 120
+  end
+
+  it 'should use the configured connection timeout' do
+    connection = DataServicesApi::Service.new(url: api_url, connection_timeout: 30)
+                                         .send(:create_http_connection, api_url)
+
+    _(connection.options.timeout).must_equal 30
+  end
 end

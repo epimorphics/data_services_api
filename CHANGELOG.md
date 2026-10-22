@@ -29,6 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The default `connection_timeout` is now 120 seconds, down from 600. It
+  applies to each attempt, and a timed-out attempt is retried twice by
+  default, so a stuck call could hold a thread for about 30 minutes; it's
+  now about 6. 120 seconds matches the upstream cut-off already seen on
+  ppd-explorer's dev environment, after which waiting longer achieves
+  nothing. Applications should set `connection_timeout` for their slowest
+  legitimate query. `connection_timeout` is now documented in the README
 - `DSAPIResponseConverter` now builds one hash per row instead of allocating
   a new hash for every key, which saves time on very large responses. The
   output is unchanged
