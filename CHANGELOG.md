@@ -13,6 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a new hash for every key, which saves time on very large responses. The
   output is unchanged
 
+### Fixed
+
+- A query that would send a parameter without a value now raises
+  `ArgumentError` naming the field, before any request is made, instead of
+  the API rejecting it with a 400 ("Cannot process an empty request
+  parameter"). This covers a `nil` or empty comparison, equality, search,
+  sort, limit or offset value, including a non-finite number, which becomes
+  `null` when the query is turned into JSON. Applications should validate
+  their input first, or rescue `ArgumentError` from `Dataset#query` and
+  `Dataset#explain`
+- Prefixed names and identifiers now keep everything after the first colon
+  (`a:b:c` is sent as `b:c`, not `b`), and a value with no prefix
+  (`detached`) is sent as it is instead of without a value. A prefix with
+  nothing after it (`ppd:`) raises `ArgumentError`
+
 ## 2.0.0
 
 ### Documentation

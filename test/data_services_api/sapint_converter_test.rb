@@ -96,4 +96,60 @@ describe 'DataServicesApi::SapiNTConverter' do
     _(sapi_conv.send(:remove_prefix, 'ppd:exampleAttribute')).must_equal 'exampleAttribute'
     _(sapi_conv.send(:remove_prefix, 'https://google.com')).must_equal 'https://google.com'
   end
+
+  it 'should keep a value with no prefix as it is' do
+    _(sapi_conv.send(:remove_prefix, 'detached')).must_equal 'detached'
+  end
+
+  it 'should keep everything after the first colon' do
+    _(sapi_conv.send(:remove_prefix, 'a:b:c')).must_equal 'b:c'
+  end
+
+  describe 'a parameter without a value' do
+    def convert(and_item)
+      DataServicesApi::SapiNTConverter.new({ '@and' => [and_item] }.to_json).to_sapint_query
+    end
+
+    it 'should raise ArgumentError for a null comparison value' do
+      error = _ { convert('ppd:pricePaid' => { '@ge' => nil }) }.must_raise ArgumentError
+      _(error.message).must_include 'pricePaid'
+    end
+
+    it 'should raise ArgumentError for a null typed comparison value' do
+      error = _ { convert('ppd:pricePaid' => { '@ge' => { '@value' => nil, '@type' => 'xsd:decimal' } }) }
+              .must_raise ArgumentError
+      _(error.message).must_include 'pricePaid'
+    end
+
+    it 'should raise ArgumentError for a null equality value' do
+      error = _ { convert('ppd:propertyType' => { '@eq' => { '@value' => nil } }) }.must_raise ArgumentError
+      _(error.message).must_include 'propertyType'
+    end
+
+    it 'should raise ArgumentError for an empty equality value' do
+      error = _ { convert('ppd:propertyType' => { '@eq' => '' }) }.must_raise ArgumentError
+      _(error.message).must_include 'propertyType'
+    end
+
+    it 'should raise ArgumentError for a missing search value' do
+      error = _ { convert('ppd:propertyAddress' => { '@search' => { '@property' => 'lrcommon:town' } }) }
+              .must_raise ArgumentError
+      _(error.message).must_include 'propertyAddress'
+    end
+
+    it 'should raise ArgumentError for an identifier with nothing after its prefix' do
+      error = _ { convert('ppd:estateType' => { '@eq' => { '@id' => 'lrcommon:' } }) }.must_raise ArgumentError
+      _(error.message).must_include 'lrcommon:'
+    end
+
+    it 'should raise ArgumentError for a null limit' do
+      error = _ { DataServicesApi::SapiNTConverter.new('{"@limit": null}').to_sapint_query }
+              .must_raise ArgumentError
+      _(error.message).must_include '@limit'
+    end
+
+    it 'should still send an unprefixed identifier as it is' do
+      _(convert('ppd:propertyType' => { '@eq' => { '@id' => 'detached' } })).must_equal('propertyType' => 'detached')
+    end
+  end
 end

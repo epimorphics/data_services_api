@@ -36,9 +36,9 @@ module DataServicesApi
     def sort(values)
       values.to_h do |value|
         sort_prop = if value.key?('@up')
-                      "+#{remove_prefix(value['@up'])}"
+                      "+#{remove_prefix(required('@sort', value['@up']))}"
                     else
-                      "-#{remove_prefix(value['@down'])}"
+                      "-#{remove_prefix(required('@sort', value['@down']))}"
                     end
         ['_sort', sort_prop]
       end
@@ -49,11 +49,11 @@ module DataServicesApi
     end
 
     def limit(value)
-      { '_limit' => value }
+      { '_limit' => required('@limit', value) }
     end
 
     def offset(value)
-      { '_offset' => value }
+      { '_offset' => required('@offset', value) }
     end
 
     def and_list(list)
@@ -92,10 +92,10 @@ module DataServicesApi
     end
 
     def eq(attribute, value)
-      return { attribute => value } unless value.is_a?(Hash)
-      return { attribute => remove_prefix(value['@id']) } if value.key?('@id')
+      return { attribute => required(attribute, value) } unless value.is_a?(Hash)
+      return { attribute => remove_prefix(required(attribute, value['@id'])) } if value.key?('@id')
 
-      { attribute => value['@value'] }
+      { attribute => required(attribute, value['@value']) }
     end
 
     def oneof(attribute, values)
@@ -107,14 +107,13 @@ module DataServicesApi
     end
 
     def comparison(prefix, attribute, value)
-      return { "#{prefix}-#{attribute}" => value } unless value.is_a?(Hash)
-
-      { "#{prefix}-#{attribute}" => value['@value'] }
+      value = value['@value'] if value.is_a?(Hash)
+      { "#{prefix}-#{attribute}" => required(attribute, value) }
     end
 
     def search(attribute, value)
-      property = remove_prefix(value['@property'])
-      search_text = sanitize_search(value['@value'])
+      property = remove_prefix(required(attribute, value['@property']))
+      search_text = sanitize_search(required(attribute, value['@value']))
       { 'searchPath' => attribute, "search-#{property}" => search_text }
     end
 
@@ -124,8 +123,22 @@ module DataServicesApi
         .gsub(/(\( | \))/, '')
     end
 
+    # Strip a CURIE prefix such as `ppd:`, keeping everything after the first
+    # colon. A value without a prefix, or a URL, is kept as it is.
     def remove_prefix(value)
-      return value.split(':')[1] unless value.match?(/^http/)
+      return value if value.match?(/^http/)
+
+      name = value.split(':', 2).last
+      return name unless name.to_s.empty?
+
+      raise ArgumentError, "Query has nothing after the prefix in #{value.inspect}"
+    end
+
+    # The API rejects a parameter without a value with a 400, so fail here with
+    # the field named instead. A nil can come from a missing key, or from a
+    # non-finite number, which becomes null when the query is turned into JSON.
+    def required(field, value)
+      raise ArgumentError, "Query has no value for #{field}" if value.nil? || value == ''
 
       value
     end
