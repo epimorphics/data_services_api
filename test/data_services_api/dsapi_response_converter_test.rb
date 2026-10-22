@@ -70,6 +70,22 @@ describe 'DataServicesApi::DSAPIResponseConverter' do
       _(ppd_resp_conv.to_dsapi_response).must_equal ppd_dsapi_items
     end
 
+    it 'should keep the API meta alongside the rows' do
+      meta = { 'limit' => 100_000, '@id' => 'http://example.com/ppd' }
+      result = DataServicesApi::DSAPIResponseConverter.new(
+        { 'meta' => meta, 'items' => ppd_sapint_items }, 'ppd', true
+      ).to_dsapi_response
+
+      _(result).must_be_kind_of Array
+      _(result).must_be_instance_of DataServicesApi::QueryResult
+      _(result.to_a).must_equal ppd_dsapi_items
+      _(result.meta).must_equal meta
+    end
+
+    it 'should give an empty meta when the API sends none' do
+      _(ppd_resp_conv.to_dsapi_response.meta).must_equal({})
+    end
+
     it 'should convert one SAPINT item to DSAPI format' do
       _(ppd_resp_conv.send(:to_dsapi_item, ppd_sapint_items[0])).must_equal ppd_dsapi_items[0]
     end

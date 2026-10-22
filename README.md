@@ -101,6 +101,22 @@ result = dataset.query(query)
 executes it against the configured API, and returns the result re-shaped back
 into the legacy DsAPI JSON format.
 
+The result is a `DataServicesApi::QueryResult`: an `Array` of rows with the
+API's `meta` alongside, as `result.meta` (an empty Hash if the API sent
+none). Read `meta` from the result itself: `map`, `select` and other methods
+that build a new array return a plain `Array` without it.
+
+For a list, `meta['limit']` is the limit the API actually applied, which is
+the endpoint's hard limit when a query asks for more, or sets no limit. There's
+no total or truncation flag, so a result with `meta['limit']` rows may have
+been capped. To find the real total, make a count query (`@count`), which
+isn't capped:
+
+```ruby
+result = dataset.query(query)
+capped = result.meta['limit'] && result.size >= result.meta['limit']
+```
+
 ### `Service` configuration options
 
 `DataServicesApi::Service.new` accepts a config hash with the following keys,

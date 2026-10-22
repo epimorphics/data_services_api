@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without knowing the API's `{"meta": …, "items": […]}` envelope.
   ppd-explorer's and ukhpi's log subscribers currently look for an `Array`
   body, which is never the case, so they never log `returned_rows`
+- `Dataset#query` returns a `DataServicesApi::QueryResult`, an `Array`
+  subclass with the API's `meta` as `#meta`, instead of a plain `Array`
+  that dropped it. Existing callers get the same rows. For a list,
+  `meta['limit']` is the limit the API applied (the endpoint's hard limit
+  overrides a larger `_limit`), so an application can tell that a result
+  with that many rows may have been capped, and make a count query for the
+  real total. `map`, `select` and similar return a plain `Array` without
+  `meta`
 
 ### Changed
 

@@ -126,6 +126,16 @@ describe 'a response body the gem does not expect' do
     _(response_payload[:row_count]).must_equal 1
   end
 
+  it 'should return the API meta alongside the rows from Dataset#query' do
+    meta = { 'limit' => 100_000 }
+    stub_api(data_api, { 'meta' => meta, 'items' => [item] }.to_json, 'Content-Type' => 'application/json')
+
+    rows = dataset.query(query)
+
+    _(rows).must_be_kind_of DataServicesApi::QueryResult
+    _(rows.meta).must_equal meta
+  end
+
   it 'should still return an explain response, which has no items, as it is' do
     explain = { 'meta' => {}, 'query' => 'SELECT ...' }
     stub_api("#{data_api}/explain", explain.to_json, 'Content-Type' => 'application/json')

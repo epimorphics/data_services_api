@@ -29,7 +29,7 @@ module DataServicesApi
 
     def structure: () -> untyped
 
-    def query: (untyped query) -> untyped
+    def query: (untyped query) -> QueryResult
 
     def describe: (untyped uri) -> untyped
 
