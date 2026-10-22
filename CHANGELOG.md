@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- `DSAPIResponseConverter` now builds one hash per row instead of allocating
+  a new hash for every key, which saves time on very large responses. The
+  output is unchanged
+
 ## 2.0.0
 
 ### Documentation

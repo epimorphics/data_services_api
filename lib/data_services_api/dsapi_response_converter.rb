@@ -21,8 +21,8 @@ module DataServicesApi
     private
 
     def to_dsapi_item(sapint_item)
-      sapint_item.reduce({}) do |result, (key, value)|
-        result.merge(to_dsapi_json(key, value))
+      sapint_item.each_with_object({}) do |(key, value), result|
+        result.merge!(to_dsapi_json(key, value))
       end
     end
 
