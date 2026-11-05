@@ -19,16 +19,20 @@ module DataServicesApi
 
     attr_reader url: untyped
 
-    DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS: { max: 4, interval: ::Float, interval_randomness: ::Float, backoff_factor: 2, exceptions: ::Array[untyped] }
+    type retry_options = { max: Integer, interval: ::Float, interval_randomness: ::Float, backoff_factor: Integer, exceptions: ::Array[Exception] }
 
-    DEFAULT_TIMEOUT_RETRY_OPTIONS: { max: 2, interval: ::Float, interval_randomness: ::Float, backoff_factor: 2, exceptions: ::Array[untyped] }
+    DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS: retry_options
 
-    DEFAULT_FARADAY_LOGGER_OPTIONS: { headers: false, bodies: false, errors: false, log_level: :debug }
+    DEFAULT_TIMEOUT_RETRY_OPTIONS: retry_options
+
+    type log_level = :debug | :info | :warn | :error
+
+    DEFAULT_FARADAY_LOGGER_OPTIONS: { headers: bool, bodies: bool, errors: bool, log_level: log_level }
 
     # Per attempt, and timeouts are retried (see DEFAULT_TIMEOUT_RETRY_OPTIONS),
     # so a call that keeps timing out takes about three times this long.
     # Applications should set connection_timeout for their slowest legitimate query.
-    DEFAULT_CONNECTION_TIMEOUT_SECONDS: 120
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS: Integer
 
     def initialize: (?::Hash[untyped, untyped] config) -> void
 
