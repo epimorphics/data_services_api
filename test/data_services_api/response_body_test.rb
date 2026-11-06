@@ -155,7 +155,7 @@ describe 'a response body the gem does not expect' do
   end
 
   it 'should still return an explain response, which has no items, as it is' do
-    explain = { 'meta' => {}, 'query' => 'SELECT ...' }
+    explain = { 'meta' => {}, 'sparql' => 'SELECT ...' }
     stub_api("#{data_api}/explain", explain.to_json, 'Content-Type' => 'application/json')
 
     _(dataset.explain(query)).must_equal explain
