@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Service#api_get_json` takes a `require_items:` keyword. With
-  `require_items: true`, a body that isn't a JSON object with an `items`
-  array raises `ServiceException`. `Dataset#query` uses it
+- `Service#api_get_json` takes a `require_items:` keyword, `true` by
+  default: a body that isn't a JSON object with an `items` array, which
+  every list and item endpoint returns, raises `ServiceException`. Pass
+  `require_items: false` for an endpoint with another shape, as
+  `Dataset#explain` does. A direct caller of `api_get_json` that reads such
+  an endpoint must now pass it; neither ppd-explorer nor ukhpi calls
+  `api_get_json` directly
 - `response.data_services_api` carries a `row_count`: the length of the
   body's `items` array, or `nil` when there isn't one (such as for
   `Dataset#explain`). Subscribers can log the number of rows returned
@@ -48,11 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ServiceException`, instead of reaching the application as a crash in its
   own code after a successful `response.data_services_api` event. This
   covers a body that isn't JSON whatever its `Content-Type` (such as an HTML
-  maintenance page served with a 200), an empty body, a bare JSON value, and,
-  from `Dataset#query`, a JSON object without an `items` array. A JSON body
-  served without a JSON content type is now parsed instead of being returned
-  as a string. The exception carries the response's status (usually 200) and
-  the raw body as `service_message`, and fires
+  maintenance page served with a 200), an empty body, a bare JSON value, and
+  a JSON object without an `items` array (except from `Dataset#explain`). A
+  JSON body served without a JSON content type is now parsed instead of being
+  returned as a string. The exception carries the response's status (usually
+  200) and the raw body as `service_message`, and fires
   `service_exception.data_services_api` instead of
   `response.data_services_api`, so subscribers count the call as failed
 - `connection_failure.data_services_api` now sends `status: nil` instead of

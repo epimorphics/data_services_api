@@ -39,16 +39,18 @@ module DataServicesApi
     def dataset: (untyped name) -> Dataset
 
     # Get parsed JSON from the given API. options are sent as query params, like
-    # params. With require_items: true, a body that isn't an object with an
-    # `items` array raises ServiceException, as for a body that isn't JSON.
+    # params. A body that isn't an object with an `items` array, which every
+    # list and item endpoint returns, raises ServiceException, as for a body
+    # that isn't JSON. Pass require_items: false for an endpoint that returns
+    # another shape, such as explain.
     def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options, ?require_items: bool) -> json_value
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json: (untyped http_url, untyped params, untyped options, ?require_items: bool) -> json_value
+    def get_json: (untyped http_url, untyped params, untyped options, require_items: bool) -> json_value
 
-    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options, ?require_items: bool) -> untyped
+    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options, require_items: bool) -> untyped
 
     # Perform an HTTP GET request against http_url, timing and instrumenting it
     # consistently regardless of whether it succeeds, times out, fails to connect,
@@ -56,7 +58,7 @@ module DataServicesApi
     # is only used to report the query string on connection/service failures (a
     # successful response reports its own resolved query string from the Faraday
     # response itself)
-    def perform_request: (untyped http_url, untyped query_params, ?require_items: bool) { (untyped) -> untyped } -> untyped
+    def perform_request: (untyped http_url, untyped query_params, require_items: bool) { (untyped) -> untyped } -> untyped
 
     def create_http_connection: (untyped http_url) -> untyped
 

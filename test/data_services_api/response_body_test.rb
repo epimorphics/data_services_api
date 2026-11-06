@@ -101,6 +101,24 @@ describe 'a response body the gem does not expect' do
     _(error.message).must_equal 'Response body has no items array'
   end
 
+  it 'should raise ServiceException for a JSON object without items from Service#api_get_json by default' do
+    body = { 'error' => 'something went wrong' }.to_json
+    stub_api(data_api, body, 'Content-Type' => 'application/json')
+    service = DataServicesApi::Service.new(url: api_url, instrumenter: notifier)
+
+    error = must_raise_service_exception(body) { service.api_get_json(data_api, {}) }
+
+    _(error.message).must_equal 'Response body has no items array'
+  end
+
+  it 'should return a JSON object without items from Service#api_get_json with require_items: false' do
+    body = { 'meta' => {}, 'query' => 'SELECT ...' }
+    stub_api(data_api, body.to_json, 'Content-Type' => 'application/json')
+    service = DataServicesApi::Service.new(url: api_url, instrumenter: notifier)
+
+    _(service.api_get_json(data_api, {}, require_items: false)).must_equal body
+  end
+
   it 'should raise ServiceException for an empty body' do
     stub_api(data_api, '', 'Content-Type' => 'application/json')
 

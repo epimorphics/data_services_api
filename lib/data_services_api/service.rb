@@ -64,20 +64,22 @@ module DataServicesApi
     end
 
     # Get parsed JSON from the given API. options are sent as query params, like
-    # params. With require_items: true, a body that isn't an object with an
-    # `items` array raises ServiceException, as for a body that isn't JSON.
-    def api_get_json(api, params, options = {}, require_items: false)
+    # params. A body that isn't an object with an `items` array, which every
+    # list and item endpoint returns, raises ServiceException, as for a body
+    # that isn't JSON. Pass require_items: false for an endpoint that returns
+    # another shape, such as explain.
+    def api_get_json(api, params, options = {}, require_items: true)
       get_json(as_http_api(api), params, options, require_items:)
     end
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options, require_items: false)
+    def get_json(http_url, params, options, require_items:)
       get_from_api(http_url, 'application/json', params, options, require_items:).body
     end
 
-    def get_from_api(http_url, accept_headers, params, options, require_items: false)
+    def get_from_api(http_url, accept_headers, params, options, require_items:)
       query_params = params.merge(options)
 
       perform_request(http_url, query_params, require_items:) do |conn|
@@ -96,7 +98,7 @@ module DataServicesApi
     # is only used to report the query string on connection/service failures (a
     # successful response reports its own resolved query string from the Faraday
     # response itself)
-    def perform_request(http_url, query_params, require_items: false) # rubocop:disable Metrics/MethodLength
+    def perform_request(http_url, query_params, require_items:) # rubocop:disable Metrics/MethodLength
       instrument_request(http_url, query_params)
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)

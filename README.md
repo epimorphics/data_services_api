@@ -219,11 +219,13 @@ happened:
 A successful status doesn't guarantee a usable body. Every body is parsed as
 JSON whatever its `Content-Type`, so a page that isn't JSON (such as an HTML
 maintenance page served with a 200) raises `ServiceException`. So does an
-empty body, a bare JSON value such as a string or number, and, from
-`Dataset#query`, a JSON object without an `items` array. These raise with the
-response's status (usually 200) and the raw body as `service_message`, and
-fire `service_exception.data_services_api` instead of `response.data_services_api`.
-`Dataset#explain` returns a different shape, so it isn't checked for `items`.
+empty body, a bare JSON value such as a string or number, and a JSON object
+without an `items` array. These raise with the response's status (usually
+200) and the raw body as `service_message`, and fire
+`service_exception.data_services_api` instead of `response.data_services_api`.
+`Dataset#explain` returns a different shape, so it isn't checked for `items`;
+when calling `Service#api_get_json` directly for such an endpoint, pass
+`require_items: false`.
 
 ---
 
