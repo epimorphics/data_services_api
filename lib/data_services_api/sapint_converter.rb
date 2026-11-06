@@ -124,14 +124,13 @@ module DataServicesApi
     end
 
     # Strip a CURIE prefix such as `ppd:`, keeping everything after the first
-    # colon. A value without a prefix, or a URL, is kept as it is.
+    # colon. A value without a prefix, a URL, or a bare prefix such as `ppd:`
+    # (the namespace itself, which the gem can't expand) is kept as it is.
     def remove_prefix(value)
       return value if value.match?(/^http/)
 
       name = value.split(':', 2).last
-      return name unless name.to_s.empty?
-
-      raise ArgumentError, "Query has nothing after the prefix in #{value.inspect}"
+      name.to_s.empty? ? value : name
     end
 
     # The API rejects a parameter without a value with a 400, so fail here with

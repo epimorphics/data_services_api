@@ -71,8 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Dataset#explain`
 - Prefixed names and identifiers now keep everything after the first colon
   (`a:b:c` is sent as `b:c`, not `b`), and a value with no prefix
-  (`detached`) is sent as it is instead of without a value. A prefix with
-  nothing after it (`ppd:`) raises `ArgumentError`
+  (`detached`) is sent as it is instead of without a value. So is a bare
+  prefix such as `lrcommon:`, which names the namespace itself
 
 ## 2.0.0
 

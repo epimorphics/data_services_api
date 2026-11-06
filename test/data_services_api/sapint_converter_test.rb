@@ -137,9 +137,8 @@ describe 'DataServicesApi::SapiNTConverter' do
       _(error.message).must_include 'propertyAddress'
     end
 
-    it 'should raise ArgumentError for an identifier with nothing after its prefix' do
-      error = _ { convert('ppd:estateType' => { '@eq' => { '@id' => 'lrcommon:' } }) }.must_raise ArgumentError
-      _(error.message).must_include 'lrcommon:'
+    it 'should send an identifier that is only a prefix as it is' do
+      _(convert('ppd:estateType' => { '@eq' => { '@id' => 'lrcommon:' } })).must_equal('estateType' => 'lrcommon:')
     end
 
     it 'should raise ArgumentError for a null limit' do
