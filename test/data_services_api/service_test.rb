@@ -87,8 +87,7 @@ describe 'DataServicesAPI::Service' do
 
     _, payload = mock_notifier.instrumentations.find { |n, _| n == 'connection_failure.data_services_api' }
 
-    _(payload).must_include :status
-    _(payload[:status]).must_be_nil
+    _(payload).wont_include :status
   end
 
   it 'should also instrument an API Service Exception' do

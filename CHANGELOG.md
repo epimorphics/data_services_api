@@ -59,12 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   200) and the raw body as `service_message`, and fires
   `service_exception.data_services_api` instead of
   `response.data_services_api`, so subscribers count the call as failed
-- `connection_failure.data_services_api` now sends `status: nil` instead of
-  a fixed `503`. No response arrives on a connection failure, so there's no
-  status to report. The key is still present, so the payload keeps the same
-  shape as `service_exception.data_services_api`. Neither ppd-explorer nor
-  ukhpi reads this field: their metrics subscribers label by exception, and
-  their log subscribers already ignored it
+- `connection_failure.data_services_api` no longer sends `status`, which
+  was a fixed `503`. No response arrives on a connection failure, so there's
+  no status to report. A subscriber reading `payload[:status]` gets `nil`.
+  Neither ppd-explorer nor ukhpi uses this field: their metrics subscribers
+  label by exception, and their log subscribers already ignored it
 - A query that would send a parameter without a value now raises
   `ArgumentError` naming the field, before any request is made, instead of
   the API rejecting it with a 400 ("Cannot process an empty request

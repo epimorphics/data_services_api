@@ -245,17 +245,15 @@ module DataServicesApi
     # (after retries are exhausted): the request never got a response at all.
     # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
     # (String, no scheme/host/query), query_string (String or nil - nil for
-    # GET requests with no params), duration (Integer milliseconds, see
-    # #instrument_response), and status (always nil, since no response
-    # was received).
+    # GET requests with no params), and duration (Integer milliseconds, see
+    # #instrument_response). There's no status, since no response was received.
     def instrument_connection_failure(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'connection_failure.data_services_api',
         exception:,
         path: URI.parse(http_url).path,
         query_string: query_params && URI.encode_www_form(query_params),
-        duration: elapsed_ms(start_time),
-        status: nil
+        duration: elapsed_ms(start_time)
       )
     end
 

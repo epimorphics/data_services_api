@@ -339,7 +339,7 @@ the event doesn't include that field):
 | `path` | `String` (bare path, no scheme/host/query) | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | ✓ |
 | `query_string` | `String`, nilable<sup>§</sup> | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | - |
 | `method` | `String`, upcased | - | - | -<sup>‡</sup> | - | - | ✓ |
-| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | always `nil` | nilable<sup>¶</sup> | - |
+| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | - | nilable<sup>¶</sup> | - |
 | `duration` | `Integer`, **milliseconds** | - | - | ✓ | ✓ | ✓ | - |
 | `will_retry_in` | `Float`, **seconds** | - | - | - | - | - | ✓ |
 | `retry_count` | `Integer`, 1-indexed | - | - | - | - | - | ✓ |
