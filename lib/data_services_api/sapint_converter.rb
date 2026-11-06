@@ -135,7 +135,8 @@ module DataServicesApi
 
     # The API rejects a parameter without a value with a 400, so fail here with
     # the field named instead. A nil can come from a missing key, or from a
-    # non-finite number, which becomes null when the query is turned into JSON.
+    # non-finite Float (NaN or Infinity), which ActiveSupport's to_json, as used
+    # in the Rails apps, writes as null. (Plain JSON raises GeneratorError.)
     def required(field, value)
       raise ArgumentError, "Query has no value for #{field}" if value.nil? || value == ''
 

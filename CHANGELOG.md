@@ -40,8 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   default, so a stuck call could hold a thread for about 30 minutes; it's
   now about 6. 120 seconds matches the upstream cut-off already seen on
   ppd-explorer's dev environment, after which waiting longer achieves
-  nothing. Applications should set `connection_timeout` for their slowest
-  legitimate query. `connection_timeout` is now documented in the README
+  nothing. The timeout covers opening the connection and each read and
+  write, not the whole response, so in practice it caps how long a query
+  may run before the API starts responding. Applications should set
+  `connection_timeout` above that for their slowest query.
+  `connection_timeout` is now documented in the README
 - `DSAPIResponseConverter` now builds one hash per row instead of allocating
   a new hash for every key, which saves time on very large responses. The
   output is unchanged
@@ -68,10 +71,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ArgumentError` naming the field, before any request is made, instead of
   the API rejecting it with a 400 ("Cannot process an empty request
   parameter"). This covers a `nil` or empty comparison, equality, search,
-  sort, limit or offset value, including a non-finite number, which becomes
-  `null` when the query is turned into JSON. Applications should validate
-  their input first, or rescue `ArgumentError` from `Dataset#query` and
-  `Dataset#explain`
+  sort, limit or offset value, including a non-finite `Float` (`NaN` or
+  `Infinity`), which ActiveSupport's `to_json` writes as `null`.
+  Applications should validate their input first, or rescue `ArgumentError`
+  from `Dataset#query` and `Dataset#explain`
 - Prefixed names and identifiers now keep everything after the first colon
   (`a:b:c` is sent as `b:c`, not `b`), and a value with no prefix
   (`detached`) is sent as it is instead of without a value. So is a bare

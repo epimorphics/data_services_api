@@ -30,9 +30,14 @@ module DataServicesApi
       log_level: :debug
     }.freeze
 
-    # Per attempt, and timeouts are retried (see DEFAULT_TIMEOUT_RETRY_OPTIONS),
-    # so a call that keeps timing out takes about three times this long.
-    # Applications should set connection_timeout for their slowest legitimate query.
+    # Faraday applies this to opening the connection and to each read and write,
+    # not to the whole response: it's the longest the API may go without sending
+    # anything. The API sends nothing until a query has run, so in practice it
+    # caps how long a query may take before the response starts. Per attempt,
+    # and timeouts are retried (see DEFAULT_TIMEOUT_RETRY_OPTIONS), so a call
+    # that keeps timing out takes about three times this long. Applications
+    # should set connection_timeout above the time their slowest query takes to
+    # start responding.
     DEFAULT_CONNECTION_TIMEOUT_SECONDS = 120
 
     def initialize(config = {}) # rubocop:disable Metrics/MethodLength

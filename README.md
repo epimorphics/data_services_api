@@ -141,12 +141,15 @@ all optional except `url`:
   quiet unless the consuming app turns its own logger's level down
 - `connection_timeout` - seconds to wait for the API, applied by Faraday to
   each attempt (opening the connection, and each read and write). Defaults
-  to 120. A timed-out attempt is retried under `timeout_retry_options`, so
+  to 120. It isn't a limit on the whole response: it's the longest the API
+  may go without sending anything. The API sends nothing until a query has
+  run, so in practice it caps how long a query may take before the response
+  starts. A timed-out attempt is retried under `timeout_retry_options`, so
   with the defaults a call that keeps timing out holds its thread for about
   three times this long (6 minutes) before raising `Faraday::TimeoutError`.
-  Applications should set a value that fits their slowest legitimate query,
-  and no longer than any proxy or load balancer in front of the API will
-  wait
+  Applications should set a value above the time their slowest query takes
+  to start responding, and no longer than any proxy or load balancer in
+  front of the API will wait
 - `connection_failed_retry_options` - a hash of
   [`faraday-retry`](https://github.com/lostisland/faraday-retry) options
   (`max`, `interval`, `interval_randomness`, `backoff_factor`) applied to
