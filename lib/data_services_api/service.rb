@@ -71,10 +71,16 @@ module DataServicesApi
     # Get parsed JSON from the given API. options are sent as query params, like
     # params. A body that isn't an object with an `items` array, which every
     # list and item endpoint returns, raises ServiceException, as for a body
-    # that isn't JSON. Pass require_items: false for an endpoint that returns
-    # another shape, such as explain.
-    def api_get_json(api, params, options = {}, require_items: true)
-      get_json(as_http_api(api), params, options, require_items:)
+    # that isn't JSON.
+    def api_get_json(api, params, options = {})
+      get_json(as_http_api(api), params, options, require_items: true)
+    end
+
+    # Get parsed JSON from the given explain API, which returns an object with
+    # the generated `sparql` rather than `items`. A body that isn't a JSON object
+    # or array still raises ServiceException.
+    def api_get_explain_json(api, params, options = {})
+      get_json(as_http_api(api), params, options, require_items: false)
     end
 
     private

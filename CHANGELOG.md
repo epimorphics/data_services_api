@@ -11,13 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `Service#api_get_json` takes a `require_items:` keyword, `true` by
-  default: a body that isn't a JSON object with an `items` array, which
-  every list and item endpoint returns, raises `ServiceException`. Pass
-  `require_items: false` for an endpoint with another shape, as
-  `Dataset#explain` does. A direct caller of `api_get_json` that reads such
-  an endpoint must now pass it; neither ppd-explorer nor ukhpi calls
-  `api_get_json` directly
+- `Service#api_get_explain_json`, which `Dataset#explain` uses. An explain
+  response is an object with the generated `sparql` and no `items`, so it
+  isn't checked for one. `Service#api_get_json` now requires an `items`
+  array (see Fixed below), so a direct caller that reads an endpoint with
+  another shape must use `api_get_explain_json` instead; neither
+  ppd-explorer nor ukhpi calls `api_get_json` directly
 - `response.data_services_api` carries a `row_count`: the length of the
   body's `items` array, or `nil` when there isn't one (such as for
   `Dataset#explain`). Subscribers can log the number of rows returned
