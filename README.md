@@ -101,6 +101,22 @@ result = dataset.query(query)
 executes it against the configured API, and returns the result re-shaped back
 into the legacy DsAPI JSON format.
 
+The result is a `DataServicesApi::QueryResult`: an `Array` of rows with the
+API's `meta` alongside, as `result.meta` (an empty Hash if the API sent
+none). Read `meta` from the result itself: `map`, `select` and other methods
+that build a new array return a plain `Array` without it.
+
+For a list, `meta['limit']` is the limit the API actually applied, which is
+the endpoint's hard limit when a query asks for more, or sets no limit. There's
+no total or truncation flag, so a result with `meta['limit']` rows may have
+been capped. To find the real total, make a count query (`@count`), which
+isn't capped:
+
+```ruby
+result = dataset.query(query)
+capped = result.meta['limit'] && result.size >= result.meta['limit']
+```
+
 ### `Service` configuration options
 
 `DataServicesApi::Service.new` accepts a config hash with the following keys,
@@ -123,6 +139,17 @@ all optional except `url`:
   `headers: false, bodies: false, errors: false, log_level: :debug`, so
   Faraday's request/response one-liners log at `debug` by default, staying
   quiet unless the consuming app turns its own logger's level down
+- `connection_timeout` - seconds to wait for the API, applied by Faraday to
+  each attempt (opening the connection, and each read and write). Defaults
+  to 120. It isn't a limit on the whole response: it's the longest the API
+  may go without sending anything. The API sends nothing until a query has
+  run, so in practice it caps how long a query may take before the response
+  starts. A timed-out attempt is retried under `timeout_retry_options`, so
+  with the defaults a call that keeps timing out holds its thread for about
+  three times this long (6 minutes) before raising `Faraday::TimeoutError`.
+  Applications should set a value above the time their slowest query takes
+  to start responding, and no longer than any proxy or load balancer in
+  front of the API will wait
 - `connection_failed_retry_options` - a hash of
   [`faraday-retry`](https://github.com/lostisland/faraday-retry) options
   (`max`, `interval`, `interval_randomness`, `backoff_factor`) applied to
@@ -191,6 +218,17 @@ happened:
   (the URL that was requested), giving consuming applications one stable
   type to rescue for this whole category, regardless of which Faraday
   version or exact status code is behind it
+
+A successful status doesn't guarantee a usable body. Every body is parsed as
+JSON whatever its `Content-Type`, so a page that isn't JSON (such as an HTML
+maintenance page served with a 200) raises `ServiceException`. So does an
+empty body, a bare JSON value such as a string or number, and a JSON object
+without an `items` array. These raise with the response's status (usually
+200) and the raw body as `service_message`, and fire
+`service_exception.data_services_api` instead of `response.data_services_api`.
+`Dataset#explain` returns a different shape, an object with the generated
+`sparql`, so it goes through `Service#api_get_explain_json`, which isn't
+checked for `items`.
 
 ---
 
@@ -286,7 +324,8 @@ configured `instrumenter`:
   (timeout or refused connection), after retries are exhausted. The request
   never got a response at all.
 - **`service_exception.data_services_api`** - the remote API responded, but
-  with an error status (any 4xx/5xx) or an unparseable body. The exception in
+  with an error status (any 4xx/5xx) or a body that isn't the JSON the gem
+  expects (see [Errors](#errors)). The exception in
   this payload is always a `DataServicesApi::ServiceException` - Faraday's own
   exception types are wrapped before a subscriber ever sees them.
 - **`retry.data_services_api`** - fired immediately before each retry attempt
@@ -303,11 +342,11 @@ the event doesn't include that field):
 | `path` | `String` (bare path, no scheme/host/query) | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | ✓ |
 | `query_string` | `String`, nilable<sup>§</sup> | - | ✓ | -<sup>‡</sup> | ✓ | ✓ | - |
 | `method` | `String`, upcased | - | - | -<sup>‡</sup> | - | - | ✓ |
-| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | always `503` | nilable<sup>¶</sup> | - |
+| `status` | `Integer`, nilable | - | - | -<sup>‡</sup> | - | nilable<sup>¶</sup> | - |
 | `duration` | `Integer`, **milliseconds** | - | - | ✓ | ✓ | ✓ | - |
 | `will_retry_in` | `Float`, **seconds** | - | - | - | - | - | ✓ |
 | `retry_count` | `Integer`, 1-indexed | - | - | - | - | - | ✓ |
-| `returned_rows` | `Integer`, nilable | - | - | -<sup>‡</sup> | - | - | - |
+| `row_count` | `Integer`, nilable<sup>‖</sup> | - | - | ✓ | - | - | - |
 
 <sup>†</sup> `requests.data_services_api`'s payload is a `Faraday::Env`, not a
 Hash - none of these field names apply; see above.<br>
@@ -317,7 +356,9 @@ examples below.<br>
 <sup>§</sup> `nil` for GET requests with no params.<br>
 <sup>¶</sup> `nil` if Faraday never associated a response with the error
 (`Faraday::Error#response_status` returns `nil` in that case - can happen
-for some `Faraday::ParsingError`s).
+for some `Faraday::ParsingError`s).<br>
+<sup>‖</sup> the length of the body's `items` array, or `nil` when there isn't
+one (such as an explain response).
 
 **`duration` (milliseconds) and `will_retry_in` (seconds) use different units
 and types** - both describe elapsed/remaining time, but come from different
@@ -373,7 +414,7 @@ class DataServicesApiSubscriber < ActiveSupport::Subscriber
   def connection_failure(event)
     exception = event.payload[:exception]
     Prometheus::Client.registry.get(:api_connection_failure).increment
-    Rails.logger.error(message: "API connection failure: #{exception.message}", status: 503)
+    Rails.logger.error(message: "API connection failure: #{exception.message}")
   end
 
   def service_exception(event)
@@ -408,13 +449,12 @@ to load (and attach) at boot rather than on first use:
 DataServicesApiSubscriber
 ```
 
-**Deriving the returned row count** (see the note on `response.data_services_api`
-above — it isn't a separate field):
+**The returned row count** is in `response.data_services_api`'s `row_count`,
+so a subscriber doesn't need to know the shape of the API's response body:
 
 ```ruby
 def response(event)
-  response = event.payload[:response]
-  returned_rows = response.body['items']&.size
+  returned_rows = event.payload[:row_count]
   # ...
 end
 ```

@@ -30,7 +30,15 @@ module DataServicesApi
       log_level: :debug
     }.freeze
 
-    DEFAULT_CONNECTION_TIMEOUT_SECONDS = 600
+    # Faraday applies this to opening the connection and to each read and write,
+    # not to the whole response: it's the longest the API may go without sending
+    # anything. The API sends nothing until a query has run, so in practice it
+    # caps how long a query may take before the response starts. Per attempt,
+    # and timeouts are retried (see DEFAULT_TIMEOUT_RETRY_OPTIONS), so a call
+    # that keeps timing out takes about three times this long. Applications
+    # should set connection_timeout above the time their slowest query takes to
+    # start responding.
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS = 120
 
     def initialize(config = {}) # rubocop:disable Metrics/MethodLength
       @instrumenter = config[:instrumenter] || (in_rails? && ActiveSupport::Notifications)
@@ -60,21 +68,32 @@ module DataServicesApi
       Dataset.new(endpoint, self)
     end
 
+    # Get parsed JSON from the given API. options are sent as query params, like
+    # params. A body that isn't an object with an `items` array, which every
+    # list and item endpoint returns, raises ServiceException, as for a body
+    # that isn't JSON.
     def api_get_json(api, params, options = {})
-      get_json(as_http_api(api), params, options)
+      get_json(as_http_api(api), params, options, require_items: true)
+    end
+
+    # Get parsed JSON from the given explain API, which returns an object with
+    # the generated `sparql` rather than `items`. A body that isn't a JSON object
+    # or array still raises ServiceException.
+    def api_get_explain_json(api, params, options = {})
+      get_json(as_http_api(api), params, options, require_items: false)
     end
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json(http_url, params, options)
-      get_from_api(http_url, 'application/json', params, options).body
+    def get_json(http_url, params, options, require_items:)
+      get_from_api(http_url, 'application/json', params, options, require_items:).body
     end
 
-    def get_from_api(http_url, accept_headers, params, options)
+    def get_from_api(http_url, accept_headers, params, options, require_items:)
       query_params = params.merge(options)
 
-      perform_request(http_url, query_params) do |conn|
+      perform_request(http_url, query_params, require_items:) do |conn|
         conn.get do |req|
           req.headers['X-Request-Id'] = Thread.current[:request_id] if Thread.current[:request_id]
           req.headers['Accept'] = accept_headers
@@ -90,13 +109,14 @@ module DataServicesApi
     # is only used to report the query string on connection/service failures (a
     # successful response reports its own resolved query string from the Faraday
     # response itself)
-    def perform_request(http_url, query_params) # rubocop:disable Metrics/MethodLength
+    def perform_request(http_url, query_params, require_items:) # rubocop:disable Metrics/MethodLength
       instrument_request(http_url, query_params)
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC, :microsecond)
       conn = create_http_connection(http_url)
 
       response = yield(conn)
+      check_body(response, require_items)
       instrument_response(response, start_time)
       response
     rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
@@ -129,12 +149,33 @@ module DataServicesApi
         config.request :retry, with_retry_instrumentation(@connection_failed_retry_options)
         config.request :retry, with_retry_instrumentation(@timeout_retry_options)
 
-        config.response :json
+        # Parse every body as JSON whatever its content type, so that an HTML page
+        # served with a 200 raises Faraday::ParsingError instead of reaching the
+        # caller as a string. Keep the raw body so #check_body can report it.
+        config.response :json, content_type: [], preserve_raw: true
         # ! Since responses are processed by the middleware stack in reverse order
         config.response :raise_error
         # ! Passing the logger in last ensures that errors are logged before the exception is raised.
         config.response :logger, @faraday_logger, @faraday_logger_options if @faraday_logger
       end
+    end
+
+    # Raise Faraday::ParsingError, which #perform_request wraps as a
+    # ServiceException, for a parsed body that the caller can't use: anything
+    # other than a JSON object or array (an empty body parses to nil), or, with
+    # require_items, anything other than an object with an `items` array. The
+    # messages are fixed strings, so they're safe to use as metric labels.
+    def check_body(response, require_items)
+      body = response.body
+      problem = if !body.is_a?(Hash) && !body.is_a?(Array)
+                  'Response body is not a JSON object or array'
+                elsif require_items && !(body.is_a?(Hash) && body['items'].is_a?(Array))
+                  'Response body has no items array'
+                end
+      return unless problem
+
+      raw = { status: response.status, headers: response.headers, body: response.env[:raw_body] }
+      raise Faraday::ParsingError.new(problem, raw)
     end
 
     # Add a retry_block to the given faraday-retry options that fires a
@@ -182,14 +223,22 @@ module DataServicesApi
     # with response (the raw Faraday::Response - path/query_string/method are
     # all derivable from response.env.url/.method rather than duplicated as
     # separate payload keys) and duration (Integer milliseconds, floor-divided
-    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value),
+    # and row_count (Integer, the length of the body's `items` array, or nil
+    # when there isn't one, such as for an explain response).
     def instrument_response(response, start_time)
       elapsed_time = elapsed_ms(start_time)
       instrumenter&.instrument(
         'response.data_services_api',
         response:,
-        duration: elapsed_time
+        duration: elapsed_time,
+        row_count: row_count(response.body)
       )
+    end
+
+    def row_count(body)
+      items = body['items'] if body.is_a?(Hash)
+      items.length if items.is_a?(Array)
     end
 
     # Fires 'request.data_services_api' immediately before a request is sent.
@@ -207,17 +256,15 @@ module DataServicesApi
     # (after retries are exhausted): the request never got a response at all.
     # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
     # (String, no scheme/host/query), query_string (String or nil - nil for
-    # GET requests with no params), duration (Integer milliseconds, see
-    # #instrument_response), and status (always the literal 503 - a fixed
-    # value, not derived from any actual response, since none was received).
+    # GET requests with no params), and duration (Integer milliseconds, see
+    # #instrument_response). There's no status, since no response was received.
     def instrument_connection_failure(http_url, query_params, exception, start_time)
       instrumenter&.instrument(
         'connection_failure.data_services_api',
         exception:,
         path: URI.parse(http_url).path,
         query_string: query_params && URI.encode_www_form(query_params),
-        duration: elapsed_ms(start_time),
-        status: 503
+        duration: elapsed_ms(start_time)
       )
     end
 

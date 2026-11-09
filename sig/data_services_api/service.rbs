@@ -19,26 +19,47 @@ module DataServicesApi
 
     attr_reader url: untyped
 
-    DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS: { max: 4, interval: ::Float, interval_randomness: ::Float, backoff_factor: 2, exceptions: ::Array[untyped] }
+    type retry_options = { max: Integer, interval: ::Float, interval_randomness: ::Float, backoff_factor: Integer, exceptions: ::Array[Exception] }
 
-    DEFAULT_TIMEOUT_RETRY_OPTIONS: { max: 2, interval: ::Float, interval_randomness: ::Float, backoff_factor: 2, exceptions: ::Array[untyped] }
+    DEFAULT_CONNECTION_FAILED_RETRY_OPTIONS: retry_options
 
-    DEFAULT_FARADAY_LOGGER_OPTIONS: { headers: false, bodies: false, errors: false, log_level: :debug }
+    DEFAULT_TIMEOUT_RETRY_OPTIONS: retry_options
 
-    DEFAULT_CONNECTION_TIMEOUT_SECONDS: 600
+    type log_level = :debug | :info | :warn | :error
+
+    DEFAULT_FARADAY_LOGGER_OPTIONS: { headers: bool, bodies: bool, errors: bool, log_level: log_level }
+
+    # Faraday applies this to opening the connection and to each read and write,
+    # not to the whole response: it's the longest the API may go without sending
+    # anything. The API sends nothing until a query has run, so in practice it
+    # caps how long a query may take before the response starts. Per attempt,
+    # and timeouts are retried (see DEFAULT_TIMEOUT_RETRY_OPTIONS), so a call
+    # that keeps timing out takes about three times this long. Applications
+    # should set connection_timeout above the time their slowest query takes to
+    # start responding.
+    DEFAULT_CONNECTION_TIMEOUT_SECONDS: Integer
 
     def initialize: (?::Hash[untyped, untyped] config) -> void
 
     def dataset: (untyped name) -> Dataset
 
+    # Get parsed JSON from the given API. options are sent as query params, like
+    # params. A body that isn't an object with an `items` array, which every
+    # list and item endpoint returns, raises ServiceException, as for a body
+    # that isn't JSON.
     def api_get_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> json_value
+
+    # Get parsed JSON from the given explain API, which returns an object with
+    # the generated `sparql` rather than `items`. A body that isn't a JSON object
+    # or array still raises ServiceException.
+    def api_get_explain_json: (untyped api, untyped params, ?::Hash[untyped, untyped] options) -> json_value
 
     private
 
     # Get parsed JSON from the given URL
-    def get_json: (untyped http_url, untyped params, untyped options) -> json_value
+    def get_json: (untyped http_url, untyped params, untyped options, require_items: bool) -> json_value
 
-    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options) -> untyped
+    def get_from_api: (untyped http_url, untyped accept_headers, untyped params, untyped options, require_items: bool) -> untyped
 
     # Perform an HTTP GET request against http_url, timing and instrumenting it
     # consistently regardless of whether it succeeds, times out, fails to connect,
@@ -46,9 +67,16 @@ module DataServicesApi
     # is only used to report the query string on connection/service failures (a
     # successful response reports its own resolved query string from the Faraday
     # response itself)
-    def perform_request: (untyped http_url, untyped query_params) { (untyped) -> untyped } -> untyped
+    def perform_request: (untyped http_url, untyped query_params, require_items: bool) { (untyped) -> untyped } -> untyped
 
     def create_http_connection: (untyped http_url) -> untyped
+
+    # Raise Faraday::ParsingError, which #perform_request wraps as a
+    # ServiceException, for a parsed body that the caller can't use: anything
+    # other than a JSON object or array (an empty body parses to nil), or, with
+    # require_items, anything other than an object with an `items` array. The
+    # messages are fixed strings, so they're safe to use as metric labels.
+    def check_body: (untyped response, bool require_items) -> void
 
     # Add a retry_block to the given faraday-retry options that fires a
     # retry.data_services_api notification before each retry attempt, preserving any
@@ -75,16 +103,19 @@ module DataServicesApi
     # with response (the raw Faraday::Response - path/query_string/method are
     # all derivable from response.env.url/.method rather than duplicated as
     # separate payload keys) and duration (Integer milliseconds, floor-divided
-    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value).
+    # by #elapsed_ms - sub-millisecond requests report 0, not a fractional value),
+    # and row_count (Integer, the length of the body's `items` array, or nil
+    # when there isn't one, such as for an explain response).
     def instrument_response: (untyped response, untyped start_time) -> untyped
+
+    def row_count: (untyped body) -> Integer?
 
     # Fires 'connection_failure.data_services_api' on a network-level failure
     # (after retries are exhausted): the request never got a response at all.
     # Payload: exception (Faraday::TimeoutError or ConnectionFailed), path
     # (String, no scheme/host/query), query_string (String or nil - nil for
-    # GET requests with no params), duration (Integer milliseconds, see #instrument_response),
-    # and status (always the literal 503 - a fixed value, not derived from any
-    # actual response, since none was received).
+    # GET requests with no params), and duration (Integer milliseconds, see
+    # #instrument_response). There's no status, since no response was received.
     def instrument_connection_failure: (untyped http_url, untyped query_params, untyped exception, untyped start_time) -> untyped
 
     # Fires 'service_exception.data_services_api' when the remote API responded

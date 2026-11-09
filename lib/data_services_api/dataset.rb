@@ -50,7 +50,7 @@ module DataServicesApi
     def explain(query)
       sapi_query_params = SapiNTConverter.new(query.to_json).to_sapint_query
       explain_url = "#{data_api}/explain"
-      service.api_get_json(explain_url, sapi_query_params)
+      service.api_get_explain_json(explain_url, sapi_query_params)
     end
   end
 end

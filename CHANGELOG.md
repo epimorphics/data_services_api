@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.1.0 - 2026-10-22
+
+### Added
+
+- `Service#api_get_explain_json`, which `Dataset#explain` uses. An explain
+  response is an object with the generated `sparql` and no `items`, so it
+  isn't checked for one. `Service#api_get_json` now requires an `items`
+  array (see Fixed below), so a direct caller that reads an endpoint with
+  another shape must use `api_get_explain_json` instead; neither
+  ppd-explorer nor ukhpi calls `api_get_json` directly
+- `response.data_services_api` carries a `row_count`: the length of the
+  body's `items` array, or `nil` when there isn't one (such as for
+  `Dataset#explain`). Subscribers can log the number of rows returned
+  without knowing the API's `{"meta": …, "items": […]}` envelope.
+  ppd-explorer's and ukhpi's log subscribers currently look for an `Array`
+  body, which is never the case, so they never log `returned_rows`
+- `Dataset#query` returns a `DataServicesApi::QueryResult`, an `Array`
+  subclass with the API's `meta` as `#meta`, instead of a plain `Array`
+  that dropped it. Existing callers get the same rows. For a list,
+  `meta['limit']` is the limit the API applied (the endpoint's hard limit
+  overrides a larger `_limit`), so an application can tell that a result
+  with that many rows may have been capped, and make a count query for the
+  real total. `map`, `select` and similar return a plain `Array` without
+  `meta`
+
+### Changed
+
+- The default `connection_timeout` is now 120 seconds, down from 600. It
+  applies to each attempt, and a timed-out attempt is retried twice by
+  default, so a stuck call could hold a thread for about 30 minutes; it's
+  now about 6. 120 seconds matches the upstream cut-off already seen on
+  ppd-explorer's dev environment, after which waiting longer achieves
+  nothing. The timeout covers opening the connection and each read and
+  write, not the whole response, so in practice it caps how long a query
+  may run before the API starts responding. Applications should set
+  `connection_timeout` above that for their slowest query.
+  `connection_timeout` is now documented in the README
+- `DSAPIResponseConverter` now builds one hash per row instead of allocating
+  a new hash for every key, which saves time on very large responses. The
+  output is unchanged
+
+### Fixed
+
+- A response that isn't the JSON the gem expects now raises
+  `ServiceException`, instead of reaching the application as a crash in its
+  own code after a successful `response.data_services_api` event. This
+  covers a body that isn't JSON whatever its `Content-Type` (such as an HTML
+  maintenance page served with a 200), an empty body, a bare JSON value, and
+  a JSON object without an `items` array (except from `Dataset#explain`). A
+  JSON body served without a JSON content type is now parsed instead of being
+  returned as a string. The exception carries the response's status (usually
+  200) and the raw body as `service_message`, and fires
+  `service_exception.data_services_api` instead of
+  `response.data_services_api`, so subscribers count the call as failed
+- `connection_failure.data_services_api` no longer sends `status`, which
+  was a fixed `503`. No response arrives on a connection failure, so there's
+  no status to report. A subscriber reading `payload[:status]` gets `nil`.
+  Neither ppd-explorer nor ukhpi uses this field: their metrics subscribers
+  label by exception, and their log subscribers already ignored it
+- A query that would send a parameter without a value now raises
+  `ArgumentError` naming the field, before any request is made, instead of
+  the API rejecting it with a 400 ("Cannot process an empty request
+  parameter"). This covers a `nil` or empty comparison, equality, search,
+  sort, limit or offset value, including a non-finite `Float` (`NaN` or
+  `Infinity`), which ActiveSupport's `to_json` writes as `null`.
+  Applications should validate their input first, or rescue `ArgumentError`
+  from `Dataset#query` and `Dataset#explain`
+- Prefixed names and identifiers now keep everything after the first colon
+  (`a:b:c` is sent as `b:c`, not `b`), and a value with no prefix
+  (`detached`) is sent as it is instead of without a value. So is a bare
+  prefix such as `lrcommon:`, which names the namespace itself
+
 ## 2.0.0
 
 ### Documentation

@@ -11,18 +11,20 @@ module DataServicesApi
       @json_mode_compact = json_mode_compact
     end
 
-    # Converts SAPINT returned JSON format to DSAPI returned JSON format
+    # Converts SAPINT returned JSON format to DSAPI returned JSON format, keeping
+    # the API's `meta` alongside the rows
     def to_dsapi_response
-      @sapint_response['items'].map do |value|
+      rows = @sapint_response['items'].map do |value|
         to_dsapi_item(value)
       end
+      QueryResult.new(rows, @sapint_response['meta'])
     end
 
     private
 
     def to_dsapi_item(sapint_item)
-      sapint_item.reduce({}) do |result, (key, value)|
-        result.merge(to_dsapi_json(key, value))
+      sapint_item.each_with_object({}) do |(key, value), result|
+        result.merge!(to_dsapi_json(key, value))
       end
     end
 

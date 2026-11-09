@@ -84,6 +84,10 @@ describe 'DataServicesAPI::Service' do
     event_names = mock_notifier.instrumentations.map(&:first)
 
     _(event_names).must_include 'connection_failure.data_services_api'
+
+    _, payload = mock_notifier.instrumentations.find { |n, _| n == 'connection_failure.data_services_api' }
+
+    _(payload).wont_include :status
   end
 
   it 'should also instrument an API Service Exception' do
@@ -115,19 +119,28 @@ describe 'DataServicesAPI::Service' do
 
     _(payload).wont_be_nil
     _(payload[:response].body['items']).wont_be_nil
+    _(payload[:row_count]).must_equal payload[:response].body['items'].length
   end
 
+  # The name is kept to match its VCR cassette. The duration is reported in
+  # milliseconds, timed internally in microseconds. A replayed response can
+  # take under a millisecond, so 0 is valid; one in microseconds would exceed
+  # the time measured around the call.
   it 'should correctly receive a duration in microseconds' do
     mock_notifier = MockNotifications.new
 
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
     DataServicesApi::Service
       .new(url: api_url, instrumenter: mock_notifier)
       .api_get_json("#{api_url}/landregistry/id/ukhpi", { '_limit' => 1 })
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - started
 
     _, payload = mock_notifier.instrumentations.find { |name, _| name == 'response.data_services_api' }
 
     _(payload).wont_be_nil
-    _(payload[:duration]).must_be :>, 0
+    _(payload[:duration]).must_be_kind_of Integer
+    _(payload[:duration]).must_be :>=, 0
+    _(payload[:duration]).must_be :<=, elapsed
   end
 
   it 'should instrument a request before it is sent' do
@@ -174,5 +187,18 @@ describe 'DataServicesAPI::Service' do
 
     _(retries.size).must_equal 2
     _(retries.map { |_, payload| payload[:retry_count] }).must_equal [1, 2]
+  end
+
+  it 'should set the default timeout to 120 seconds' do
+    connection = DataServicesApi::Service.new(url: api_url).send(:create_http_connection, api_url)
+
+    _(connection.options.timeout).must_equal 120
+  end
+
+  it 'should use the configured connection timeout' do
+    connection = DataServicesApi::Service.new(url: api_url, connection_timeout: 30)
+                                         .send(:create_http_connection, api_url)
+
+    _(connection.options.timeout).must_equal 30
   end
 end

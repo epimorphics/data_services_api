@@ -37,6 +37,15 @@ module DataServicesApi
 
     def sanitize_search: (untyped search_text) -> untyped
 
+    # Strip a CURIE prefix such as `ppd:`, keeping everything after the first
+    # colon. A value without a prefix, a URL, or a bare prefix such as `ppd:`
+    # (the namespace itself, which the gem can't expand) is kept as it is.
     def remove_prefix: (untyped value) -> untyped
+
+    # The API rejects a parameter without a value with a 400, so fail here with
+    # the field named instead. A nil can come from a missing key, or from a
+    # non-finite Float (NaN or Infinity), which ActiveSupport's to_json, as used
+    # in the Rails apps, writes as null. (Plain JSON raises GeneratorError.)
+    def required: (String field, untyped value) -> untyped
   end
 end

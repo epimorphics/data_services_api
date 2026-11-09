@@ -11,8 +11,9 @@ module DataServicesApi
 
     def initialize: (untyped sapint_response, untyped dataset_name, ?bool json_mode_compact) -> void
 
-    # Converts SAPINT returned JSON format to DSAPI returned JSON format
-    def to_dsapi_response: () -> untyped
+    # Converts SAPINT returned JSON format to DSAPI returned JSON format, keeping
+    # the API's `meta` alongside the rows
+    def to_dsapi_response: () -> QueryResult
 
     private
 
